@@ -1,7 +1,7 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import connectDB from './config/db.js'; // Added .js extension as required by ES Modules
 
 // Initialize app
 const app = express();
@@ -15,7 +15,7 @@ app.use(cors());
 
 // Health Check Route
 app.get('/', (req, res) => {
-    res.json({ message: 'DonerHQ Server is running 🚀' });
+    res.json({ message: 'DonerHQ Server is running (ES Modules) 🚀' });
 });
 
 // Port configuration
