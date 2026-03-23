@@ -11,6 +11,8 @@ import connectDB from './config/db.js';
 
 // Importing our authentication routes for handling login and registration
 import authRoutes from './routes/auth.routes.js';
+// Importing our user routes for handling profile reading, updating and following NGOs
+import userRoutes from './routes/user.routes.js';
 
 // Initializing the express application instance
 const app = express();
@@ -53,6 +55,9 @@ app.use(cookieParser());
 
 // Mounting our authentication routes under the /api/auth path
 app.use('/api/auth', authRoutes);
+
+// Mounting our user module routes under the /api/users path
+app.use('/api/users', userRoutes);
 
 // Setting a simple default endpoint for server connectivity testing
 app.get('/', (req, res) => {
