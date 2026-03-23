@@ -48,8 +48,9 @@ const postSchema = new mongoose.Schema({
     timestamps: true 
 });
 
-// Optimization index to ensure the feed always loads the newest content first
-postSchema.index({ createdAt: -1 });
+// Optimization: Indexes for high-speed feed sorting and tag discovery
+postSchema.index({ createdAt: -1 }); // Loads newest posts instantly for infinite scroll
+postSchema.index({ tags: 1 });      // Speeds up searching by #tags (e.g., #environment)
 
 const Post = mongoose.model('Post', postSchema);
 export default Post;
