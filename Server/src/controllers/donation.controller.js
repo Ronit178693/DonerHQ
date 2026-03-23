@@ -3,15 +3,17 @@
  * Handles processing of donations and retrieving donation history.
  */
 
-// Placeholder for donation controller methods
+// Controller to initiate and process a new donation transaction
 export const processDonation = async (req, res) => {
-    // Logic to initiate a new donation
+    // Logic to create a new donation record and process payment
 };
 
+// Controller to retrieve the full history of donations for a user or NGO
 export const getDonationHistory = async (req, res) => {
-    // Logic to retrieve user or NGO donation logs
+    // Logic to query the donation collection for relevant logs
 };
 
+// Controller to retrieve the specific details and status of a single transaction
 export const getDonationDetails = async (req, res) => {
-    // Logic to view individual transaction status
+    // Logic to find a single donation document by its ID
 };

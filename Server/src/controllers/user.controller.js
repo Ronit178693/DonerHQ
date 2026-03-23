@@ -85,96 +85,77 @@ export const updateUserProfile = async (req, res) => {
 //  SOCIAL MEDIA FEATURES (Follow NGOs like social accounts)
 // ═══════════════════════════════════════════════════════════════
 
-// Follow an NGO to see their photo/short video/text posts in the personalized feed
+// Follow an NGO
 export const followNGO = async (req, res) => {
-    // Extracting the target NGO ID from the request body
+    // Extract target NGO ID from request body
     const { ngoId } = req.body;
-    // Starting a try-catch block for the follow operation
+    // Try block for follow execution
     try {
-        // Validating that the target NGO ID was actually provided
+        // Validate presence of NGO ID
         if (!ngoId) {
-            // Returning a 400 Bad Request error if the ID is missing
+            // Return 400 if ID is missing
             return res.status(400).json({ success: false, message: 'NGO ID is required' });
         }
 
-        // Searching the database for the target NGO profile
-        const ngo = await NGO.findById(ngoId);
-        // Checking if the NGO actually exists
-        if (!ngo) {
-            // Returning a 404 error if the NGO profile could not be found
+        // Check if NGO exists in collection
+        const ngoExists = await NGO.exists({ _id: ngoId });
+        // Handle non-existent NGO case
+        if (!ngoExists) {
+            // Return 404 if not found
             return res.status(404).json({ success: false, message: 'NGO not found' });
         }
 
-        // Fetching the currently logged-in user's profile
+        // Fetch current user document
         const user = await User.findById(req.user._id);
-
-        // Checking if the user's following list already contains this NGO ID
+        // Prevent duplicate follow actions
         if (user.following.includes(ngoId)) {
-            // Blocking the request to prevent duplicate follow records
-            return res.status(400).json({ success: false, message: 'You are already following this NGO' });
+            // Return 400 if already followed
+            return res.status(400).json({ success: false, message: 'Already following this NGO' });
         }
 
-        // Pushing the NGO ID into the user's following list (influences feed algorithm)
-        user.following.push(ngoId);
-        // Saving the user document with the new follow
-        await user.save();
+        // Add NGO to user's following list atomically
+        await User.findByIdAndUpdate(req.user._id, { $addToSet: { following: ngoId } });
+        // Increment NGO's global follower count atomically
+        await NGO.findByIdAndUpdate(ngoId, { $inc: { followerCount: 1 } });
 
-        // Incrementing the NGO's follower count metric for their creator dashboard
-        ngo.followerCount += 1;
-        // Saving the NGO document to persist the new reach metrics
-        await ngo.save();
-
-        // Returning a 200 OK response confirming the action
-        return res.status(200).json({ success: true, message: `Successfully followed ${ngo.name}` });
-    // Catch block for unexpected execution errors
+        // Acknowledge success to client
+        return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
     } catch (error) {
-        // Returning a 500 Internal Server Error response
-        return res.status(500).json({ success: false, message: error.message });
+        // Error handling for database/server failures
+        return res.status(500).json({ success: false, message: 'Error following NGO', error: error.message });
     }
 };
 
-// Unfollow an NGO to stop seeing their posts in the feed
+// Unfollow an NGO
 export const unfollowNGO = async (req, res) => {
-    // Extracting the target NGO ID from the request body
+    // Extract target NGO ID from request body
     const { ngoId } = req.body;
-    // Initiating the try block for error handling
+    // Try block for unfollow execution
     try {
-        // Throwing a bad request error if the NGO ID is missing from the payload
+        // Validate presence of NGO ID
         if (!ngoId) {
-            // Sending the 400 error response
+            // Return 400 if ID is missing
             return res.status(400).json({ success: false, message: 'NGO ID is required' });
         }
 
-        // Looking up the current authenticated user in the database
+        // Fetch current user document
         const user = await User.findById(req.user._id);
-
-        // Validating if the user is actually following the target NGO
+        // Check if follow record exists
         if (!user.following.includes(ngoId)) {
-            // Rejecting the request if there is no follow relationship to remove
-            return res.status(400).json({ success: false, message: 'You are not following this NGO' });
+            // Return 400 if not following
+            return res.status(400).json({ success: false, message: 'Not following this NGO' });
         }
 
-        // Filtering out the target NGO ID from the following array
-        user.following = user.following.filter(id => id.toString() !== ngoId.toString());
-        // Committing the updated array to the database
-        await user.save();
+        // Remove NGO from user's following list atomically
+        await User.findByIdAndUpdate(req.user._id, { $pull: { following: ngoId } });
+        // Decrement NGO's global follower count atomically
+        await NGO.findByIdAndUpdate(ngoId, { $inc: { followerCount: -1 } });
 
-        // Looking up the target NGO to adjust their metrics
-        const ngo = await NGO.findById(ngoId);
-        // Ensuring we don't accidentally drop the follower count below zero
-        if (ngo && ngo.followerCount > 0) {
-            // Decrementing the follower count by one
-            ngo.followerCount -= 1;
-            // Saving the updated metrics to the NGO profile
-            await ngo.save();
-        }
-
-        // Sending a positive confirmation that the unfollow was successful
+        // Acknowledge success to client
         return res.status(200).json({ success: true, message: 'Successfully unfollowed NGO' });
-    // Catching any database connection issues or logical errors
     } catch (error) {
-        // Responding with a 500 error code
-        return res.status(500).json({ success: false, message: error.message });
+        // Error handling for database/server failures
+        return res.status(500).json({ success: false, message: 'Error unfollowing NGO', error: error.message });
     }
 };
 
@@ -182,36 +163,35 @@ export const unfollowNGO = async (req, res) => {
 //  PERSONALISED ALGORITHM FEED (New: Social Feed)
 // ═══════════════════════════════════════════════════════════════
 
-// Fetch the personalized social media feed based on interests and following
+// Fetch the personalized social media feed
 export const getUserFeed = async (req, res) => {
-    // Starting a try-catch block for the feed generation logic
+    // Try block for feed generation
     try {
-        // Fetching the current user's document to access their interests and following lists
+        // Fetch current user document
         const user = await User.findById(req.user._id);
         
-        // Simulating the personalized feed algorithm by matching NGO content with user preferences
+        // Query posts based on user interests and following
         const feedPosts = await Post.find({
-            // Building an OR query block to match multiple feed criteria
+            // Match any of the following conditions
             $or: [
-                // Condition 1: Include posts authored by NGOs the user explicitly follows
-                { authorNGO: { $in: user.following } },
-                // Condition 2: Include posts categorised under the user's preferred interests
+                // Condition 1: Posts from followed NGOs
+                { ngoId: { $in: user.following } },
+                // Condition 2: Posts matching user interest categories
                 { category: { $in: user.interests } }
             ]
         })
-        // Sorting the feed to show the newest posts first (reverse chronological timeline)
+        // Sort newest posts to the top
         .sort({ createdAt: -1 })
-        // Limiting the initial feed output to 20 posts to prevent overwhelming the client
+        // Cap results for performance
         .limit(20)
-        // Populating the NGO author details to display their name, logo, and verification on the post
-        .populate('authorNGO', 'name logo verified transparencyScore');
+        // Populate author NGO details
+        .populate('ngoId', 'name logo verified transparencyScore');
         
-        // Returning the generated personalized feed back to the user's client
+        // Return feed results to client
         return res.status(200).json({ success: true, count: feedPosts.length, feed: feedPosts });
-    // Catch block to capture any failures in the feed generation
     } catch (error) {
-        // Emitting a server error status if fetching fails
-        return res.status(500).json({ success: false, message: error.message });
+        // Error handling for feed retrieval
+        return res.status(500).json({ success: false, message: 'Error fetching feed', error: error.message });
     }
 };
 
@@ -221,65 +201,59 @@ export const getUserFeed = async (req, res) => {
 
 // Save an NGO to the wishlist
 export const saveNGO = async (req, res) => {
-    // Extracting the NGO ID that the user wants to save
+    // Extract target ID from request body
     const { ngoId } = req.body;
-    // Commencing the function logic inside a try block
+    // Try block for save action
     try {
-        // Verifying that the client actually submitted an NGO ID
+        // Validate presence of ID
         if (!ngoId) {
-            // Firing a 400 error if missing
+            // Return 400 if ID is missing
             return res.status(400).json({ success: false, message: 'NGO ID is required' });
         }
 
-        // Retrieving the current user's model from DB
-        const user = await User.findById(req.user._id);
+        // Atomic toggle/push to saved list
+        const updatedUser = await User.findByIdAndUpdate(
+            // Target specific user
+            req.user._id,
+            // Add ID to set to ensure uniqueness
+            { $addToSet: { savedNGOs: ngoId } },
+            // Request modified document back
+            { new: true }
+        );
 
-        // Verifying that the target NGO isn't already inside the wishlist
-        if (user.savedNGOs.includes(ngoId)) {
-            // Dismissing the duplicate save request
-            return res.status(400).json({ success: false, message: 'NGO is already in your wishlist' });
-        }
-
-        // Adding the target NGO reference to the saved array
-        user.savedNGOs.push(ngoId);
-        // Finalizing the save operation
-        await user.save();
-
-        // Returning positive feedback to the user
+        // Acknowledge bookmark success
         return res.status(200).json({ success: true, message: 'NGO added to wishlist successfully' });
-    // Identifying any unknown errors
     } catch (error) {
-        // Yielding an error block to the frontend
-        return res.status(500).json({ success: false, message: error.message });
+        // Error handling for wishlist update
+        return res.status(500).json({ success: false, message: 'Error saving NGO', error: error.message });
     }
 };
 
 // Remove an NGO from the wishlist
 export const unsaveNGO = async (req, res) => {
-    // Identifying the target NGO to remove
+    // Extract target ID from request body
     const { ngoId } = req.body;
-    // Triggering the block for database instructions
+    // Try block for removal action
     try {
-        // Confirming ID exists in request
+        // Validate presence of ID
         if (!ngoId) {
-            // Discarding empty queries
+            // Return 400 if ID is missing
             return res.status(400).json({ success: false, message: 'NGO ID is required' });
         }
 
-        // Fetching user scope
-        const user = await User.findById(req.user._id);
+        // Atomic removal from saved list
+        await User.findByIdAndUpdate(
+            // Target specific user
+            req.user._id,
+            // Pull specific ID from array
+            { $pull: { savedNGOs: ngoId } }
+        );
 
-        // Filtering out the targeted ID to effect the removal
-        user.savedNGOs = user.savedNGOs.filter(id => id.toString() !== ngoId.toString());
-        // Saving the purged list back to MongoDB
-        await user.save();
-
-        // Providing success notification
+        // Acknowledge removal success
         return res.status(200).json({ success: true, message: 'NGO removed from wishlist' });
-    // Preparing catch area
     } catch (error) {
-        // Standardized failure exit
-        return res.status(500).json({ success: false, message: error.message });
+        // Error handling for wishlist removal
+        return res.status(500).json({ success: false, message: 'Error removing NGO from wishlist', error: error.message });
     }
 };
 
