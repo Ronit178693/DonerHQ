@@ -25,5 +25,8 @@ const teamSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Added index for high-speed member lookup for team dashboards
+teamSchema.index({ createdBy: 1 });
+
 const Team = mongoose.model('Team', teamSchema);
 export default Team;

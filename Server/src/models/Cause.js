@@ -47,5 +47,8 @@ const causeSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Optimization: Index to instantly load all causes belonging to a specific NGO profile
+causeSchema.index({ ngoId: 1 });
+
 const Cause = mongoose.model('Cause', causeSchema);
 export default Cause;

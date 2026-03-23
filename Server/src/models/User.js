@@ -1,48 +1,187 @@
+// Importing the mongoose library to interact with MongoDB
 import mongoose from 'mongoose';
+// Importing bcryptjs for password hashing and comparison
+import bcrypt from 'bcryptjs';
 
-// Define the schema for all types of users (Donors, NGOs, and Admins)
+// Defining a constant array of valid interest categories for donor onboarding
+export const INTEREST_CATEGORIES = [
+    // Education related causes
+    'education',
+    // Environment and sustainability causes
+    'environment',
+    // Health and medical causes
+    'health',
+    // Women empowerment causes
+    'women',
+    // Animal welfare causes
+    'animals',
+    // Hunger and food security causes
+    'hunger'
+];
+
+// Creating a new mongoose schema for the User model
 const userSchema = new mongoose.Schema({
-    // Full name of the user for profile display and communications
-    name: { type: String, required: true },
-    
-    // Unique email for login and sending donation receipts
-    email: { type: String, required: true, unique: true },
-    
-    // Hashed password for secure authentication
-    password: { type: String, required: true },
-    
-    // Defines the user's capabilities (NGOs have different tools than Donors)
-    role: { 
-        type: String, 
-        enum: ['donor', 'ngo', 'admin'], 
-        default: 'donor' 
+    // Name field for the user
+    name: {
+        // Data type is string
+        type: String,
+        // Field is required with a custom error message
+        required: [true, 'Please provide a name'],
+        // Trims whitespace from both ends
+        trim: true,
+        // Minimum length of 2 characters with a custom error message
+        minlength: [2, 'Name must be at least 2 characters long']
     },
-    
-    // Topics the user cares about (e.g., "Environment") to personalize their feed
-    interestTags: [{ type: String }],
-    
-    // List of NGOs the user follows for real-time updates on their home feed
-    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'NGO' }],
-    
-    // Users can "Bookmark" NGOs they want to support later
-    savedNGOs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'NGO' }],
-    
-    // Tracking for receipts and total impact calculation
-    donationHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Donation' }],
-    
-    // Gamification: Consecutive days of activity to keep user engagement high
-    streak: { type: Number, default: 0 },
-    
-    // Accumulated points for the global and team-based Leaderboards
-    leaderboardScore: { type: Number, default: 0 },
-    
-    // Link to the user's fund-raising team (optional)
-    teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
-    
-}, { 
-    // Automatically creates 'createdAt' and 'updatedAt' for record keeping
-    timestamps: true 
+
+    // Email field for the user
+    email: {
+        // Data type is string
+        type: String,
+        // Field is required with a custom error message
+        required: [true, 'Please provide an email'],
+        // Ensures email uniqueness in the collection
+        unique: true,
+        // Converts email to lowercase before saving
+        lowercase: true,
+        // Regex validation for email format with a custom error message
+        match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    },
+
+    // Password field for the user
+    password: {
+        // Data type is string
+        type: String,
+        // Field is required with a custom error message
+        required: [true, 'Please provide a password'],
+        // Minimum password length of 6 characters
+        minlength: [6, 'Password must be at least 6 characters long'],
+        // Excludes this field from query results by default for security
+        select: false
+    },
+
+    // Role field to distinguish user types
+    role: {
+        // Data type is string
+        type: String,
+        // Restricts values to donor, ngo, or admin
+        enum: ['donor', 'ngo', 'admin'],
+        // Default role is donor
+        default: 'donor'
+    },
+
+    // Interests field for donor-specific preferences
+    interests: [{
+        // Data type is string
+        type: String,
+        // Restricts values to the predefined interest categories
+        enum: INTEREST_CATEGORIES
+    }],
+
+    // Flag to track if the onboarding quiz is completed
+    onboardingComplete: {
+        // Data type is boolean
+        type: Boolean,
+        // Defaults to false
+        default: false
+    },
+
+    // Additional interest tags as strings
+    interestTags: [{
+        // Data type is string
+        type: String
+    }],
+
+    // List of NGO IDs the user is following
+    following: [{
+        // References the ObjectId of another document
+        type: mongoose.Schema.Types.ObjectId,
+        // References the NGO model
+        ref: 'NGO'
+    }],
+
+    // List of NGO IDs the user has saved
+    savedNGOs: [{
+        // References the ObjectId of another document
+        type: mongoose.Schema.Types.ObjectId,
+        // References the NGO model
+        ref: 'NGO'
+    }],
+
+    // List of donation IDs associated with the user
+    donationHistory: [{
+        // References the ObjectId of another document
+        type: mongoose.Schema.Types.ObjectId,
+        // References the Donation model
+        ref: 'Donation'
+    }],
+
+    // Counter for user's activity streak
+    streak: {
+        // Data type is number
+        type: Number,
+        // Defaults to 0
+        default: 0
+    },
+
+    // Score for leaderboard rankings
+    leaderboardScore: {
+        // Data type is number
+        type: Number,
+        // Defaults to 0
+        default: 0
+    },
+
+    // Reference to a fundraising team
+    teamId: {
+        // References the ObjectId of another document
+        type: mongoose.Schema.Types.ObjectId,
+        // References the Team model
+        ref: 'Team'
+    },
+
+    // Link to an NGO profile if the user is an NGO
+    ngoProfile: {
+        // References the ObjectId of another document
+        type: mongoose.Schema.Types.ObjectId,
+        // References the NGO model
+        ref: 'NGO'
+    },
+
+    // OTP for password reset functionality
+    otp: {
+        // Data type is number
+        type: Number,
+        // Defaults to null
+        default: null
+    },
+    // Expiration timestamp for the OTP
+    otpExpires: {
+        // Data type is date
+        type: Date,
+        // Defaults to null
+        default: null
+    }
+
+}, {
+    // Automatically adds createdAt and updatedAt fields
+    timestamps: true
 });
 
+// Helper function to hash a plain text password
+export const hashPassword = async (password) => {
+    // Generating a salt with 10 rounds
+    const salt = await bcrypt.genSalt(10);
+    // Hashing the password with the generated salt
+    return await bcrypt.hash(password, salt);
+};
+
+// Helper function to compare a plain text password with a hashed one
+export const comparePassword = async (password, hashedPassword) => {
+    // Using bcrypt to compare the two passwords
+    return await bcrypt.compare(password, hashedPassword);
+};
+
+// Creating the User model from the schema
 const User = mongoose.model('User', userSchema);
+// Exporting the User model as default
 export default User;
