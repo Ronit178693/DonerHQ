@@ -15,6 +15,10 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 // Importing our NGO routes for profile, discovery, posting, and analytics
 import ngoRoutes from './routes/ngo.routes.js';
+// Importing our post routes for social feed, interactions and content creation
+import postRoutes from './routes/post.routes.js';
+// Importing our team routes for collective fundraising and group management
+import teamRoutes from './routes/team.routes.js';
 
 // Initializing the express application instance
 const app = express();
@@ -63,6 +67,12 @@ app.use('/api/users', userRoutes);
 
 // Mounting our NGO module routes under the /api/ngos path
 app.use('/api/ngos', ngoRoutes);
+
+// Mounting our post module routes under the /api/posts path
+app.use('/api/posts', postRoutes);
+
+// Mounting our team module routes under the /api/teams path
+app.use('/api/teams', teamRoutes);
 
 // Setting a simple default endpoint for server connectivity testing
 app.get('/', (req, res) => {
