@@ -165,6 +165,8 @@ export const unfollowNGO = async (req, res) => {
 
 // Fetch the personalized social media feed
 export const getUserFeed = async (req, res) => {
+    // Extract optional pagination parameters
+    const { page = 1, limit = 20 } = req.query;
     // Try block for feed generation
     try {
         // Fetch current user document
@@ -176,19 +178,37 @@ export const getUserFeed = async (req, res) => {
             $or: [
                 // Condition 1: Posts from followed NGOs
                 { ngoId: { $in: user.following } },
-                // Condition 2: Posts matching user interest categories
-                { category: { $in: user.interests } }
+                // Condition 2: Posts tagged with categories matching user interest categories
+                { tags: { $in: user.interests || [] } }
             ]
         })
         // Sort newest posts to the top
         .sort({ createdAt: -1 })
-        // Cap results for performance
-        .limit(20)
+        // Pagination logic
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
         // Populate author NGO details
-        .populate('ngoId', 'name logo verified transparencyScore');
+        .populate('ngoId', 'name logo verified transparencyScore')
+        // Populate linked cause details for the donate button overlay
+        .populate('linkedCauseId', 'title goalAmount raisedAmount status');
         
-        // Return feed results to client
-        return res.status(200).json({ success: true, count: feedPosts.length, feed: feedPosts });
+        // Count total for pagination metadata
+        const total = await Post.countDocuments({
+            $or: [
+                { ngoId: { $in: user.following } },
+                { tags: { $in: user.interests || [] } }
+            ]
+        });
+
+        // Return feed results to client with pagination metadata
+        return res.status(200).json({ 
+            success: true, 
+            count: feedPosts.length, 
+            total,
+            page: parseInt(page),
+            pages: Math.ceil(total / limit),
+            feed: feedPosts 
+        });
     } catch (error) {
         // Error handling for feed retrieval
         return res.status(500).json({ success: false, message: 'Error fetching feed', error: error.message });

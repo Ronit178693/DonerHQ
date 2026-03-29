@@ -156,28 +156,47 @@ export const interactWithPost = async (req, res) => {
             return res.status(400).json({ success: false, message: 'postId and action are required' });
         }
 
-        // Verifying the target post exists before processing any interaction
-        const postExists = await Post.exists({ _id: postId });
+        // Searching for the post to find its current state
+        const post = await Post.findById(postId);
         // Guard clause for non-existent post
-        if (!postExists) {
+        if (!post) {
             // Returning 404 if the post was not found in the database
             return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        // Declaring a variable to hold the updated post after interaction
+        // Declaring a variable to hold the final updated post record
         let updatedPost;
 
         // Routing the request based on the specified social action type
         if (action === 'like') {
-            // Atomically incrementing the total like count on the post
-            updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
-                postId,
-                // Using $inc to add one to the likes counter
-                { $inc: { likes: 1 } },
-                // Returning the updated document after modification
-                { new: true }
-            );
+            // Checking if the user has already liked this specific post
+            const isLiked = post.likedBy.includes(req.user._id);
+            
+            if (isLiked) {
+                // If already liked, perform an UNLIKE action
+                updatedPost = await Post.findByIdAndUpdate(
+                    postId,
+                    { 
+                        // Decrement total like counter
+                        $inc: { likes: -1 },
+                        // Remove user ID from the likedBy array
+                        $pull: { likedBy: req.user._id }
+                    },
+                    { new: true }
+                );
+            } else {
+                // If not liked yet, perform a LIKE action
+                updatedPost = await Post.findByIdAndUpdate(
+                    postId,
+                    { 
+                        // Increment total like counter
+                        $inc: { likes: 1 },
+                        // Add user ID to likedBy set (ensures uniqueness)
+                        $addToSet: { likedBy: req.user._id }
+                    },
+                    { new: true }
+                );
+            }
         // Handling the comment interaction type
         } else if (action === 'comment') {
             // Validating that comment text was actually provided
@@ -185,35 +204,31 @@ export const interactWithPost = async (req, res) => {
                 // Returning 400 if the comment body is empty
                 return res.status(400).json({ success: false, message: 'Comment text is required' });
             }
-            // Atomically pushing a new comment sub-document into the comments array
+            // Atomically pushing a new comment and incrementing the total comment counter
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $push to append the comment with user reference and text
-                { $push: { comments: { userId: req.user._id, text } } },
-                // Returning the updated document after the comment is added
+                { 
+                    // Pushing the new comment object into the array
+                    $push: { comments: { userId: req.user._id, text } },
+                    // Incrementing the cached comment count field
+                    $inc: { commentCount: 1 }
+                },
                 { new: true }
             );
         // Handling the share interaction type
         } else if (action === 'share') {
             // Atomically incrementing the share counter for viral tracking
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $inc to add one to the shares counter
                 { $inc: { shares: 1 } },
-                // Returning the updated document after modification
                 { new: true }
             );
         // Handling the donate click conversion tracking
         } else if (action === 'donateClick') {
             // Atomically incrementing the conversion metric counter
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $inc to add one to the donateClicks counter
                 { $inc: { donateClicks: 1 } },
-                // Returning the updated document after modification
                 { new: true }
             );
         // Handling any unrecognized action types
