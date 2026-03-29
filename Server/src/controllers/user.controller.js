@@ -53,11 +53,20 @@ export const updateUserProfile = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         // Updating the user's name if a new name was provided
-        if (name) user.name = name;
+        if (name) {
+            // Assigning the new name to the user object
+            user.name = name;
+        }
         // Updating the free-form interest tags if new tags were provided
-        if (interestTags) user.interestTags = interestTags;
+        if (interestTags) {
+            // Assigning the new interest tags array
+            user.interestTags = interestTags;
+        }
         // Updating the core onboarding interest categories if provided
-        if (interests) user.interests = interests;
+        if (interests) {
+            // Assigning the core interests array
+            user.interests = interests;
+        }
 
         // Saving the modified user document back to the database
         await user.save();
@@ -120,6 +129,7 @@ export const followNGO = async (req, res) => {
 
         // Acknowledge success to client
         return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
+    // Catch any error during the follow process
     } catch (error) {
         // Error handling for database/server failures
         return res.status(500).json({ success: false, message: 'Error following NGO', error: error.message });
@@ -153,6 +163,7 @@ export const unfollowNGO = async (req, res) => {
 
         // Acknowledge success to client
         return res.status(200).json({ success: true, message: 'Successfully unfollowed NGO' });
+    // Catch any error during the unfollow process
     } catch (error) {
         // Error handling for database/server failures
         return res.status(500).json({ success: false, message: 'Error unfollowing NGO', error: error.message });
@@ -184,8 +195,9 @@ export const getUserFeed = async (req, res) => {
         })
         // Sort newest posts to the top
         .sort({ createdAt: -1 })
-        // Pagination logic
+        // Pagination logic: skip previous items
         .skip((page - 1) * limit)
+        // Pagination logic: limit items per response
         .limit(parseInt(limit))
         // Populate author NGO details
         .populate('ngoId', 'name logo verified transparencyScore')
@@ -194,21 +206,31 @@ export const getUserFeed = async (req, res) => {
         
         // Count total for pagination metadata
         const total = await Post.countDocuments({
+            // Apply same filter as the find query
             $or: [
+                // Following filter
                 { ngoId: { $in: user.following } },
+                // Interest filter
                 { tags: { $in: user.interests || [] } }
             ]
         });
 
         // Return feed results to client with pagination metadata
         return res.status(200).json({ 
+            // Mark successful
             success: true, 
+            // Result count
             count: feedPosts.length, 
+            // Total available
             total,
+            // Current page
             page: parseInt(page),
+            // Total pages
             pages: Math.ceil(total / limit),
+            // Feed data
             feed: feedPosts 
         });
+    // Catching any feed generation errors
     } catch (error) {
         // Error handling for feed retrieval
         return res.status(500).json({ success: false, message: 'Error fetching feed', error: error.message });
@@ -243,6 +265,7 @@ export const saveNGO = async (req, res) => {
 
         // Acknowledge bookmark success
         return res.status(200).json({ success: true, message: 'NGO added to wishlist successfully' });
+    // Catching any save errors
     } catch (error) {
         // Error handling for wishlist update
         return res.status(500).json({ success: false, message: 'Error saving NGO', error: error.message });
@@ -271,6 +294,7 @@ export const unsaveNGO = async (req, res) => {
 
         // Acknowledge removal success
         return res.status(200).json({ success: true, message: 'NGO removed from wishlist' });
+    // Catching any unsave errors
     } catch (error) {
         // Error handling for wishlist removal
         return res.status(500).json({ success: false, message: 'Error removing NGO from wishlist', error: error.message });
@@ -330,8 +354,6 @@ export const getRecommendedCauses = async (req, res) => {
         const user = await User.findById(req.user._id);
         
         // In a deployed application, an axios call would be made to a Flask/FastAPI BERT ML service here
-        // Example: const response = await axios.post('http://ml-server/recommend', { interests: user.interests });
-        
         // For demonstration, simulating fetched causes by matching local DB with user's selected interest categories
         const recommendedCauses = await Cause.find({ category: { $in: user.interests } }).limit(10);
         
