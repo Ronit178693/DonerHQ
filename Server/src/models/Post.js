@@ -27,12 +27,18 @@ const postSchema = new mongoose.Schema({
     // Quantity of likes from the donor community for social proof
     likes: { type: Number, default: 0 },
     
+    // Tracking specific users who liked the post to prevent double-likes and allow unliking
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    
     // Thread of donor interactions and questions
     comments: [{ 
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         text: String,
         createdAt: { type: Date, default: Date.now }
     }],
+
+    // Cache for the number of comments to speed up feed loading
+    commentCount: { type: Number, default: 0 },
     
     // Tracking how many times this story was reshared outside the app
     shares: { type: Number, default: 0 },

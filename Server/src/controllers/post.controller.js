@@ -16,61 +16,61 @@ import User from '../models/User.js';
 
 // Controller for an NGO to create a new social media post
 export const createPost = async (req, res) => {
-    // Extracting the post content fields from the request body
+    // Destructuring all essential content from the body: type, media, caption, tags, and linked fundraiser
     const { type, mediaUrl, caption, tags, linkedCauseId } = req.body;
-    // Starting the try block for error handling
+    // Starting the mission to store the post safely with error catching
     try {
-        // Finding the NGO profile associated with the currently logged-in user
+        // Finding the NGO profile that corresponds to the currently logged-in user ID
         const ngo = await NGO.findOne({ userId: req.user._id });
 
-        // Checking if the NGO profile actually exists for this user
+        // Guard clause ensuring we found a valid NGO profile associated with this account
         if (!ngo) {
-            // Returning a 404 if no NGO record was found for this user
+            // Returning a 404 response if the user has not set up an NGO profile yet
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
         }
 
-        // Ensuring the NGO has been approved before allowing them to post
+        // Enforcing organizational verification before allowing any public social activity
         if (ngo.status !== 'approved') {
-            // Returning a 403 if the NGO is still pending verification
+            // Returning a 403 Forbidden error if the NGO is still in the verification queue
             return res.status(403).json({ success: false, message: 'Your NGO must be verified before you can post' });
         }
 
-        // Validating that a post type was included in the request
+        // Basic validation: ensuring the post has a defined type (photo/video/text)
         if (!type) {
-            // Returning a 400 if the type field is missing
+            // Returning 400 Bad Request if the 'type' field is missing from the payload
             return res.status(400).json({ success: false, message: 'Post type is required' });
         }
 
-        // Checking if media URL is required for the given post type
+        // Validating media presence for visual post types which require a URL
         if ((type === 'photo' || type === 'video') && !mediaUrl) {
-            // Returning a 400 if a media post was submitted without a URL
+            // Returning 400 if the post claims to have media but provides no link
             return res.status(400).json({ success: false, message: 'Media URL is required for photo/video posts' });
         }
 
-        // Creating the new post document in the database
+        // Creating and saving the fresh post document into the MongoDB collection
         const newPost = await Post.create({
-            // Linking the post to the author NGO's unique identifier
+            // Linking back to the verified NGO ID
             ngoId: ngo._id,
-            // Specifying the format of the post content
+            // Saving the format type
             type,
-            // Storing the Cloudinary media URL or empty string for text posts
+            // Setting the media asset URL or default to empty string
             mediaUrl: mediaUrl || '',
-            // Storing the caption or storytelling text
+            // Saving the caption/description text
             caption: caption || '',
-            // Storing the array of searchable hashtags for discovery
+            // Storing the searchable interest tags
             tags: tags || [],
-            // Optionally linking a fundraising cause for the donate button
+            // Linking the fundraising mission if the post is a CTA for a cause
             linkedCauseId: linkedCauseId || null
         });
 
-        // Atomically pushing the new post's ID into the NGO's posts array
+        // Updating the parent NGO document to keep a reference to this new post in their history
         await NGO.findByIdAndUpdate(ngo._id, { $push: { posts: newPost._id } });
 
-        // Returning the successfully created post document to the client
+        // Sending the successful creation response along with the new post object
         return res.status(201).json({ success: true, message: 'Post created successfully', post: newPost });
-    // Catching any validation or database errors during the process
+    // Catching any database connection issues or schema validation errors
     } catch (error) {
-        // Returning a 500 server error response with the error message
+        // Returning a 500 error with the specific failure reason for debugging
         return res.status(500).json({ success: false, message: 'Error creating post', error: error.message });
     }
 };
@@ -79,63 +79,61 @@ export const createPost = async (req, res) => {
 //  FEED — Personalized and discovery feed for donors
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to fetch the personalized social media feed for a logged-in user
+// Controller to retrieve the personalized algorithmic feed for the current user
 export const getFeedPosts = async (req, res) => {
-    // Extracting optional pagination parameters from the URL query string
+    // Extracting user pagination preferences from the query string parameters
     const { page = 1, limit = 20 } = req.query;
-    // Starting the try block for data retrieval
+    // Starting the data retrieval process with an error safety net
     try {
-        // Fetching the currently authenticated user's document to access their interests
+        // Fetching the user profile to look up their 'following' list and interest keywords
         const user = await User.findById(req.user._id);
 
-        // Building the feed query using followed NGOs and interest-based discovery
+        // Performing a complex find operation across the Posts collection
         const feedPosts = await Post.find({
-            // Using an OR condition to blend followed content with interest-based content
+            // Blending two discovery paths using an OR logical operator
             $or: [
-                // Condition 1: Posts from NGOs the user is actively following
+                // Path 1: Content from organizations the user explicitly follows
                 { ngoId: { $in: user.following } },
-                // Condition 2: Posts tagged with categories matching user interests
+                // Path 2: Content matching the user's selected interest keywords
                 { tags: { $in: user.interestTags || [] } }
             ]
         })
-        // Sorting the results so the newest updates appear at the top
+        // Ordering results by creation date so the freshest content appears first
         .sort({ createdAt: -1 })
-        // Skipping previously viewed pages of results
+        // Implementing page-based offset logic for efficient loading
         .skip((page - 1) * limit)
-        // Capping the number of results per page for performance
+        // Limiting the batch size for mobile optimization and performance
         .limit(parseInt(limit))
-        // Populating the author NGO's key display fields for the feed cards
+        // Enrolling organization data into the post results
         .populate('ngoId', 'name logo verified transparencyScore')
-        // Populating the linked cause details for the donate button overlay
+        // Enrolling fundraiser details for immediate impact action tracking
         .populate('linkedCauseId', 'title goalAmount raisedAmount status');
 
-        // Counting the total number of matching posts for pagination metadata
+        // Calculating the total volume of matching posts for UI pagination controls
         const totalPosts = await Post.countDocuments({
-            // Reusing the same filter logic for accurate page count
+            // Re-matching the same follow/interest filter criteria
             $or: [
-                // Matching followed NGO posts
                 { ngoId: { $in: user.following } },
-                // Matching interest-tagged posts
                 { tags: { $in: user.interestTags || [] } }
             ]
         });
 
-        // Returning the paginated feed results along with metadata to the client
+        // Returning the paginated results and metadata back to the frontend
         return res.status(200).json({
-            // Indicating the request completed successfully
+            // Successfully processed request
             success: true,
-            // The number of posts returned in this response
+            // Records in this response
             count: feedPosts.length,
-            // The current page number
+            // Current page marker
             page: parseInt(page),
-            // The total number of available pages
+            // Total volume of pages available
             pages: Math.ceil(totalPosts / limit),
-            // The array of populated post documents
+            // The actual array of post objects
             feed: feedPosts
         });
-    // Catching any errors during the feed generation process
+    // Catching any runtime query errors or population failures
     } catch (error) {
-        // Returning a 500 error with the specific failure message
+        // Returning a 500 status with specific failure details
         return res.status(500).json({ success: false, message: 'Error fetching feed', error: error.message });
     }
 };
@@ -144,89 +142,105 @@ export const getFeedPosts = async (req, res) => {
 //  INTERACTIONS — Likes, Comments, Shares, Donate Clicks
 // ═══════════════════════════════════════════════════════════════
 
-// Unified controller to handle all social interactions on a post
+// Controller to handle a user's social interaction with a specific post
 export const interactWithPost = async (req, res) => {
-    // Extracting the target post ID, action type, and optional comment text
+    // Extracting target post and the type of interaction from the request payload
     const { postId, action, text } = req.body;
-    // Starting the try block for interaction processing
+    // Starting the interaction handler with comprehensive error shielding
     try {
-        // Validating that a post ID and action type were provided
+        // Ensuring the essential data (what post and what action) is present
         if (!postId || !action) {
-            // Returning 400 if the required fields are missing
+            // Returning 400 Bad Request if the interaction intent is unclear
             return res.status(400).json({ success: false, message: 'postId and action are required' });
         }
 
-        // Verifying the target post exists before processing any interaction
-        const postExists = await Post.exists({ _id: postId });
-        // Guard clause for non-existent post
-        if (!postExists) {
-            // Returning 404 if the post was not found in the database
+        // Checking if the target post exists before attempting to modify it
+        const post = await Post.findById(postId);
+        // Guard clause for deleted or non-existent content
+        if (!post) {
+            // Returning 404 if the post ID does not exist in the collection
             return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        // Declaring a variable to hold the updated post after interaction
+        // Initializing the variable to hold the final updated state
         let updatedPost;
 
-        // Routing the request based on the specified social action type
+        // Logical branching based on the interaction type requested by the user
         if (action === 'like') {
-            // Atomically incrementing the total like count on the post
-            updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
-                postId,
-                // Using $inc to add one to the likes counter
-                { $inc: { likes: 1 } },
-                // Returning the updated document after modification
-                { new: true }
-            );
-        // Handling the comment interaction type
+            // Checking if the current user already appears in the like list
+            const isLiked = post.likedBy.includes(req.user._id);
+            
+            // Branching between liking and unliking (toggle logic)
+            if (isLiked) {
+                // Performing an atomic UNLIKE operation
+                updatedPost = await Post.findByIdAndUpdate(
+                    postId,
+                    { 
+                        // Decrementing the global like counter
+                        $inc: { likes: -1 },
+                        // Pulling the user's ID out of the array
+                        $pull: { likedBy: req.user._id }
+                    },
+                    { new: true }
+                );
+            } else {
+                // Performing an atomic LIKE operation
+                updatedPost = await Post.findByIdAndUpdate(
+                    postId,
+                    { 
+                        // Incrementing the global like counter
+                        $inc: { likes: 1 },
+                        // Pushing the user ID into the set (ensures unique entries)
+                        $addToSet: { likedBy: req.user._id }
+                    },
+                    { new: true }
+                );
+            }
+        // Handling the addition of a new user comment
         } else if (action === 'comment') {
-            // Validating that comment text was actually provided
+            // Validating that the comment has actual text content
             if (!text) {
-                // Returning 400 if the comment body is empty
+                // Returning 400 if the user tried to post an empty comment
                 return res.status(400).json({ success: false, message: 'Comment text is required' });
             }
-            // Atomically pushing a new comment sub-document into the comments array
+            // Performing an atomic COMMENT operation
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $push to append the comment with user reference and text
-                { $push: { comments: { userId: req.user._id, text } } },
-                // Returning the updated document after the comment is added
+                { 
+                    // Pushing the comment object into the post's embedded array
+                    $push: { comments: { userId: req.user._id, text } },
+                    // Incrementing the cached comment counter for fast feed reads
+                    $inc: { commentCount: 1 }
+                },
                 { new: true }
             );
-        // Handling the share interaction type
+        // Handling the share action (tracking viral reach)
         } else if (action === 'share') {
-            // Atomically incrementing the share counter for viral tracking
+            // Incrementing the share counter atomically
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $inc to add one to the shares counter
                 { $inc: { shares: 1 } },
-                // Returning the updated document after modification
                 { new: true }
             );
-        // Handling the donate click conversion tracking
+        // Handling deep-link clicks to the donation module
         } else if (action === 'donateClick') {
-            // Atomically incrementing the conversion metric counter
+            // Incrementing the conversion/donate indicator counter
             updatedPost = await Post.findByIdAndUpdate(
-                // Targeting the specific post document
                 postId,
-                // Using $inc to add one to the donateClicks counter
                 { $inc: { donateClicks: 1 } },
-                // Returning the updated document after modification
                 { new: true }
             );
-        // Handling any unrecognized action types
+        // Defensive case for unrecognized actions
         } else {
-            // Returning 400 for invalid action values
+            // Returning 400 for unsupported interaction types
             return res.status(400).json({ success: false, message: 'Invalid action. Use: like, comment, share, or donateClick' });
         }
 
-        // Returning the latest post state back to the client for live UI updates
+        // Transmitting the updated post data back to the client for live UI updates
         return res.status(200).json({ success: true, post: updatedPost });
-    // Catching any database errors during the social interaction
+    // Catching any database connection issues or update failures
     } catch (error) {
-        // Returning a 500 error with details if the interaction fails to save
+        // Returning a 500 status with details on why the interaction failed
         return res.status(500).json({ success: false, message: 'Error processing interaction', error: error.message });
     }
 };
@@ -235,35 +249,35 @@ export const interactWithPost = async (req, res) => {
 //  SINGLE POST — Fetch individual post details
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to retrieve the full details of a single post by its ID
+// Controller to retrieve the full context and story behind a single post
 export const getPostById = async (req, res) => {
-    // Extracting the post ID from the URL parameters
+    // Extracting the unique post ID from the URL parameters
     const { id } = req.params;
-    // Starting the try block for data retrieval
+    // Starting the detail lookup process with error handling
     try {
-        // Finding the post document and populating all referenced fields
+        // Finding the post and populating its authoring NGO, linked Cause, and community comments
         const post = await Post.findById(id)
-            // Populating the NGO author's display details
+            // Enrolling the NGO details
             .populate('ngoId', 'name logo verified transparencyScore')
-            // Populating the linked cause details for the donate button
+            // Enrolling the mission details
             .populate('linkedCauseId', 'title goalAmount raisedAmount status')
-            // Populating the user references inside the comments array
+            // Enrolling the identities of commenters
             .populate('comments.userId', 'name');
 
-        // Checking if the post was actually found in the database
+        // Guard clause ensuring the requested post actually exists
         if (!post) {
-            // Returning a 404 if no post matches the provided ID
+            // Returning a 404 response if the ID is invalid or deleted
             return res.status(404).json({ success: false, message: 'Post not found' });
         }
 
-        // Atomically incrementing the reach counter for impression tracking
+        // Incrementing the reach (impression) counter atomically during every view
         await Post.findByIdAndUpdate(id, { $inc: { reach: 1 } });
 
-        // Returning the fully populated post document to the client
+        // Returning the fully enriched post document to the requester
         return res.status(200).json({ success: true, post });
-    // Catching any errors during the single post retrieval
+    // Catching any errors during ID parsing or database lookup
     } catch (error) {
-        // Returning a 500 error with the specific failure details
+        // Returning a 500 status code with the failure message
         return res.status(500).json({ success: false, message: 'Error fetching post', error: error.message });
     }
 };
