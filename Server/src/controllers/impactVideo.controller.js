@@ -6,6 +6,8 @@ import Cause from '../models/Cause.js';
 import EscrowTransaction from '../models/EscrowTransaction.js';
 // Importing the Donation model to filter videos based on user contribution history
 import Donation from '../models/Donation.js';
+// Importing the Cloudinary upload utility to handle asset hosting
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 /**
  * Impact Video Controller
@@ -18,15 +20,30 @@ import Donation from '../models/Donation.js';
 
 // Controller for an NGO to upload a new video demonstrating social impact for a finished cause
 export const uploadImpactVideo = async (req, res) => {
-    // Extracting the target mission ID and the Cloudinary video URL from the request
-    const { causeId, videoUrl } = req.body;
+    // Extracting the target mission ID from the request body
+    const { causeId } = req.body;
     // Starting the try block to process the upload and update related states
     try {
-        // Guard clause ensuring all mandatory information is present
-        if (!causeId || !videoUrl) {
-            // Returning 400 if the mission ID or the video link is missing
-            return res.status(400).json({ success: false, message: 'Cause ID and video URL are required' });
+        // Guard clause ensuring a cause ID is provided
+        if (!causeId) {
+            return res.status(400).json({ success: false, message: 'Cause ID is required' });
         }
+
+        // Checking if a file was successfully parsed by Multer
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No video file provided' });
+        }
+
+        // Uploading the temporarily stored file to Cloudinary
+        const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+        
+        // Guard clause if Cloudinary upload failed
+        if (!cloudinaryResponse) {
+            return res.status(500).json({ success: false, message: 'Error uploading video to Cloudinary' });
+        }
+
+        // The secure URL from Cloudinary to store in our database
+        const videoUrl = cloudinaryResponse.secure_url;
 
         // Verifying that the target mission actually exists in our records
         const cause = await Cause.findById(causeId);

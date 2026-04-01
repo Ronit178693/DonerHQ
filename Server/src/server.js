@@ -19,6 +19,16 @@ import ngoRoutes from './routes/ngo.routes.js';
 import postRoutes from './routes/post.routes.js';
 // Importing our team routes for collective fundraising and group management
 import teamRoutes from './routes/team.routes.js';
+// Importing our cause routes for fundraising mission discovery and creation
+import causeRoutes from './routes/cause.routes.js';
+// Importing our donation routes for transaction processing and history auditing
+import donationRoutes from './routes/donation.routes.js';
+// Importing our escrow routes for managed fund safety and release workflows
+import escrowRoutes from './routes/escrow.routes.js';
+// Importing our impact video routes for proof-of-work discovery and review
+import impactVideoRoutes from './routes/impactVideo.routes.js';
+// Importing our algorithmic feed routes for high-relevance content ranking
+import feedRoutes from './routes/feed.routes.js';
 
 // Initializing the express application instance
 const app = express();
@@ -73,6 +83,21 @@ app.use('/api/posts', postRoutes);
 
 // Mounting our team module routes under the /api/teams path
 app.use('/api/teams', teamRoutes);
+
+// Mounting our cause module routes under the /api/causes path
+app.use('/api/causes', causeRoutes);
+
+// Mounting our donation transaction routes under the /api/donations path
+app.use('/api/donations', donationRoutes);
+
+// Mounting our escrow management routes under the /api/escrow path
+app.use('/api/escrow', escrowRoutes);
+
+// Mounting our impact proof video routes under the /api/impact-videos path
+app.use('/api/impact-videos', impactVideoRoutes);
+
+// Mounting our algorithmic feed ranking routes under the /api/feed path
+app.use('/api/feed', feedRoutes);
 
 // Setting a simple default endpoint for server connectivity testing
 app.get('/', (req, res) => {

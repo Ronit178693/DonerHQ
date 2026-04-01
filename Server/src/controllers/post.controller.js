@@ -4,6 +4,8 @@ import Post from '../models/Post.js';
 import NGO from '../models/NGO.js';
 // Importing the User model to access the authenticated user's following data
 import User from '../models/User.js';
+// Importing the Cloudinary upload utility to handle asset hosting
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 /**
  * Post Controller
@@ -16,8 +18,8 @@ import User from '../models/User.js';
 
 // Controller for an NGO to create a new social media post
 export const createPost = async (req, res) => {
-    // Destructuring all essential content from the body: type, media, caption, tags, and linked fundraiser
-    const { type, mediaUrl, caption, tags, linkedCauseId } = req.body;
+    // Destructuring essential content from the body
+    const { type, caption, tags, linkedCauseId } = req.body;
     // Starting the mission to store the post safely with error catching
     try {
         // Finding the NGO profile that corresponds to the currently logged-in user ID
@@ -25,26 +27,33 @@ export const createPost = async (req, res) => {
 
         // Guard clause ensuring we found a valid NGO profile associated with this account
         if (!ngo) {
-            // Returning a 404 response if the user has not set up an NGO profile yet
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
         }
 
         // Enforcing organizational verification before allowing any public social activity
         if (ngo.status !== 'approved') {
-            // Returning a 403 Forbidden error if the NGO is still in the verification queue
             return res.status(403).json({ success: false, message: 'Your NGO must be verified before you can post' });
         }
 
         // Basic validation: ensuring the post has a defined type (photo/video/text)
         if (!type) {
-            // Returning 400 Bad Request if the 'type' field is missing from the payload
             return res.status(400).json({ success: false, message: 'Post type is required' });
+        }
+
+        // Handling media upload if a file is present in the request
+        let mediaUrl = '';
+        if (req.file) {
+            // Uploading the temporarily stored file to Cloudinary
+            const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+            // Updating the URL if the upload was successful
+            if (cloudinaryResponse) {
+                mediaUrl = cloudinaryResponse.secure_url;
+            }
         }
 
         // Validating media presence for visual post types which require a URL
         if ((type === 'photo' || type === 'video') && !mediaUrl) {
-            // Returning 400 if the post claims to have media but provides no link
-            return res.status(400).json({ success: false, message: 'Media URL is required for photo/video posts' });
+            return res.status(400).json({ success: false, message: 'Media file is required for photo/video posts' });
         }
 
         // Creating and saving the fresh post document into the MongoDB collection
@@ -58,12 +67,12 @@ export const createPost = async (req, res) => {
             // Saving the caption/description text
             caption: caption || '',
             // Storing the searchable interest tags
-            tags: tags || [],
+            tags: typeof tags === 'string' ? JSON.parse(tags) : (tags || []),
             // Linking the fundraising mission if the post is a CTA for a cause
             linkedCauseId: linkedCauseId || null
         });
 
-        // Updating the parent NGO document to keep a reference to this new post in their history
+        // Updating the parent NGO document to keep a reference to this new post
         await NGO.findByIdAndUpdate(ngo._id, { $push: { posts: newPost._id } });
 
         // Sending the successful creation response along with the new post object

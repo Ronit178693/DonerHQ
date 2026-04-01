@@ -8,6 +8,8 @@ import {
 } from '../controllers/impactVideo.controller.js';
 // Importing the protect middleware to ensure only logged-in users access certain routes
 import { protect } from '../middlewares/auth.middleware.js';
+// Importing the upload middleware for handling impact video file segments
+import { upload } from '../middlewares/multer.js';
 
 // Creating a new router instance for the impact video module
 const router = express.Router();
@@ -23,7 +25,8 @@ router.get('/', getImpactVideos);
 router.use(protect);
 
 // End-point for NGOs to upload impact proof videos for their missions
-router.post('/upload', uploadImpactVideo);
+// Using Multer to extract the 'video' file before the controller processes the upload to Cloudinary
+router.post('/upload', upload.single('video'), uploadImpactVideo);
 
 // End-point for Admins to approve/reject impact videos (Admin status checked in controller or global middleware)
 router.post('/approve/:id', approveImpactVideo);

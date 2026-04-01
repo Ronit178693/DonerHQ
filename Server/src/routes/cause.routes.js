@@ -8,6 +8,8 @@ import {
 } from '../controllers/cause.controller.js';
 // Importing the protect middleware to ensure only logged-in users access certain routes
 import { protect } from '../middlewares/auth.middleware.js';
+// Importing the upload middleware for handling mission cover asset segments
+import { upload } from '../middlewares/multer.js';
 
 // Creating a new router instance for the cause module
 const router = express.Router();
@@ -25,8 +27,9 @@ router.get('/:id', getCauseDetails);
 // Apply the protect middleware to all routes defined below this line (only NGOs can create causes, but we check that in the controller)
 router.use(protect);
 
-// End-point to create a new campaign or charitable cause
-router.post('/create', createCause);
+// End-point to create a new campaign or charitable cause including cover image upload
+// Using Multer to extract the 'coverImage' file before the controller processes the upload to Cloudinary
+router.post('/create', upload.single('coverImage'), createCause);
 
 // Exporting the cause router configuration
 export default router;

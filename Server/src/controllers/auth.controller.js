@@ -135,7 +135,7 @@ export const registerDonor = async (req, res) => {
 // End-point to register a new NGO account with a pending verification status
 export const registerNGO = async (req, res) => {
     // Destructuring essential NGO and creator fields from the request body
-    const { name, email, password, bio, logo, location, category } = req.body;
+    const { name, email, password, bio, location, category } = req.body;
     // Starting the NGO registration mission with an error safety net
     try {
         // Validating the presence of all required fields for a complete NGO profile
@@ -152,6 +152,30 @@ export const registerNGO = async (req, res) => {
             // Returning a 400 error if the organization's email is already in use
             return res.status(400).json({ success: false, message: 'User with this email already exists' });
         // Closing the duplicate email block
+        }
+
+        // Handling multiple file uploads using the Cloudinary helper
+        let logoUrl = '';
+        let doc80GUrl = '';
+        let docFCRAUrl = '';
+
+        // Checking if the request contains complex file field data (from Multer upload.fields)
+        if (req.files) {
+            // Processing the organizational logo if provided
+            if (req.files.logo) {
+                const logoRes = await uploadOnCloudinary(req.files.logo[0].path);
+                if (logoRes) logoUrl = logoRes.secure_url;
+            }
+            // Processing the mandatory 80G tax-exemption document
+            if (req.files.doc80G) {
+                const gRes = await uploadOnCloudinary(req.files.doc80G[0].path);
+                if (gRes) doc80GUrl = gRes.secure_url;
+            }
+            // Processing the voluntary FCRA international funding certificate
+            if (req.files.docFCRA) {
+                const fRes = await uploadOnCloudinary(req.files.docFCRA[0].path);
+                if (fRes) docFCRAUrl = fRes.secure_url;
+            }
         }
 
         // Creating the core User account for the NGO creator/manager
@@ -178,7 +202,11 @@ export const registerNGO = async (req, res) => {
             // Saving the storytelling biography explaining their mission
             bio,
             // Storing the brand logo URL or defaulting to a placeholder
-            logo: logo || '',
+            logo: logoUrl || '',
+            // Saving the 80G certification link
+            doc80G: doc80GUrl || '',
+            // Saving the FCRA certification link
+            docFCRA: docFCRAUrl || '',
             // Storing the geographic headquarters or service location
             location,
             // Categorizing the NGO for easier discovery and filtering

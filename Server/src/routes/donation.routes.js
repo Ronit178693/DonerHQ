@@ -1,8 +1,9 @@
 // Importing the express framework to handle routing logic
 import express from 'express';
-// Importing the required controller functions for donation actions
+// Importing the required controller functions for secure Razorpay donation flows
 import {
-    processDonation,
+    createOrder,
+    verifyPayment,
     getDonationHistory,
     getDonationDetails
 } from '../controllers/donation.controller.js';
@@ -17,8 +18,11 @@ router.use(protect);
 
 // ─── Protected routes ───
 
-// End-point to initiate and process a new donation transaction
-router.post('/process', processDonation);
+// End-point to initialize a new Razorpay transaction order
+router.post('/create-order', createOrder);
+
+// End-point to verify the authenticity of a completed payment and record it
+router.post('/verify', verifyPayment);
 
 // End-point to retrieve the full history of donations filtered by user role (donor/ngo/admin)
 router.get('/history', getDonationHistory);

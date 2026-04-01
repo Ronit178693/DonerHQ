@@ -56,8 +56,8 @@ export const getNGOProfile = async (req, res) => {
 export const updateNGOProfile = async (req, res) => {
     // Extract ID from request parameters
     const { id } = req.params;
-    // Extract fields from request body
-    const { name, bio, logo, location, category } = req.body;
+    // Extract fields from request body (logo is now handled via Multer if file is present)
+    const { name, bio, location, category } = req.body;
     // Try block for error handling
     try {
         // Find NGO by ID
@@ -83,12 +83,18 @@ export const updateNGOProfile = async (req, res) => {
         if (name) updates.name = name;
         // Check if updated bio content is present
         if (bio) updates.bio = bio;
-        // Check if a new logo URL is specified
-        if (logo) updates.logo = logo;
         // Check if geographic location updates are needed
         if (location) updates.location = location;
         // Check if the organizational category is changing
         if (category) updates.category = category;
+
+        // Handling logo upload if a new file was provided in the update request
+        if (req.file) {
+            // Uploading the new logo to Cloudinary
+            const logoRes = await uploadOnCloudinary(req.file.path);
+            // If successful, update the logo URL in our staging object
+            if (logoRes) updates.logo = logoRes.secure_url;
+        }
 
         // Perform atomic update and return updated document
         const updatedNGO = await NGO.findByIdAndUpdate(
