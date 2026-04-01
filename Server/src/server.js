@@ -6,8 +6,14 @@ import express from 'express';
 import cors from 'cors';
 // Importing express cookieParser for parsing httpOnly authentication cookies
 import cookieParser from 'cookie-parser';
+// Importing the native http module for creating a server with socket.io support
+import http from 'http';
 // Importing our custom database connection logic to connect MongoDB
 import connectDB from './config/db.js';
+// Importing our custom Socket.io initialization logic for real-time features
+import { initSocket } from './socket.js';
+
+
 
 // Importing our authentication routes for handling login and registration
 import authRoutes from './routes/auth.routes.js';
@@ -122,8 +128,14 @@ app.use((err, req, res, next) => {
 // Defining the port for the server to listen on from environment variables
 const PORT = process.env.PORT || 5000;
 
-// Starting the server and listening for incoming network requests
-app.listen(PORT, () => {
-    // Printing a success message including the current port once initialized
-    console.log(`✅ Server running on port ${PORT}`);
+// Creating a base NodeJS Server instance from our Express Application
+const server = http.createServer(app);
+
+// Initializing the Socket.io instance with our created server to enable WebSockets
+initSocket(server);
+
+// Starting the server and listening for incoming network requests on the defined port
+server.listen(PORT, () => {
+    // Printing a success message to the console once the server is live and ready
+    console.log(`✅ Server running on port ${PORT} with Real-time Engine 🚀`);
 });
