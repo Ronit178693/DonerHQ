@@ -29,6 +29,7 @@ export const getNGOProfile = async (req, res) => {
                 path: 'posts',
                 // Sort newest first
                 options: { sort: { createdAt: -1 } }
+            // Closing the populate options
             })
             // Populate user ID and name
             .populate('userId', 'name');
@@ -37,14 +38,18 @@ export const getNGOProfile = async (req, res) => {
         if (!ngo) {
             // Return 404 if not found
             return res.status(404).json({ success: false, message: 'NGO not found' });
+        // Closing the guard clause
         }
 
         // Return success response with NGO data
         return res.status(200).json({ success: true, ngo });
+    // Catching errors
     } catch (error) {
         // Return 500 error if something fails
         return res.status(500).json({ success: false, message: 'Error fetching NGO profile', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the getNGOProfile controller
 };
 
 // Controller to update NGO profile details (only the owning user can do this)
@@ -62,12 +67,14 @@ export const updateNGOProfile = async (req, res) => {
         if (!ngo) {
             // Return 404 if not found
             return res.status(404).json({ success: false, message: 'NGO not found' });
+        // Closing the guard clause
         }
 
         // Authorization check to ensure user owns the profile
         if (ngo.userId.toString() !== req.user?._id?.toString()) {
             // Return 403 if unauthorized
             return res.status(403).json({ success: false, message: 'Not authorized to update this profile' });
+        // Closing the auth check
         }
 
         // Initialize object for selective updates
@@ -92,10 +99,13 @@ export const updateNGOProfile = async (req, res) => {
 
         // Return success response with updated NGO data
         return res.status(200).json({ success: true, message: 'NGO profile updated successfully', ngo: updatedNGO });
+    // Catching errors
     } catch (error) {
         // Return 500 error if update fails
         return res.status(500).json({ success: false, message: 'Error updating NGO profile', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the updateNGOProfile controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -115,57 +125,63 @@ export const discoverNGOs = async (req, res) => {
         if (category) {
             // Setting the category field in the query filter
             filter.category = category;
+        // Closing the category check
         }
 
         // Adding a location filter using a case-insensitive regex match
         if (location) {
-            // Allowing partial location matches (e.g., "Mumbai" matches "Mumbai, India")
+            // Allowing partial location matches
             filter.location = { $regex: location, $options: 'i' };
+        // Closing the location check
         }
 
         // Adding a text search filter for NGO name or bio
         if (search) {
-            // Using an OR condition to match search term against name or bio
+            // Using an OR condition
             filter.$or = [
-                // Case-insensitive partial match on the NGO name
+                // Match name
                 { name: { $regex: search, $options: 'i' } },
-                // Case-insensitive partial match on the NGO bio/description
+                // Match bio
                 { bio: { $regex: search, $options: 'i' } }
             ];
+        // Closing the search check
         }
 
-        // Counting total matching documents for pagination metadata
+        // Counting total matching documents
         const total = await NGO.countDocuments(filter);
 
-        // Querying the database with the constructed filter object
+        // Querying the database with the filter
         const ngos = await NGO.find(filter)
-            // Selecting only the fields needed for the discovery/browse cards
+            // Selecting fields
             .select('name logo category location bio transparencyScore followerCount totalRaised verified')
-            // Sorting by transparency score so the most trustworthy NGOs appear first
+            // Sorting
             .sort({ transparencyScore: -1 })
-            // Implementing pagination by skipping already-viewed results
+            // Paginating
             .skip((page - 1) * limit)
-            // Limiting the number of results per page
+            // Limiting
             .limit(parseInt(limit));
 
-        // Returning the paginated list of NGOs along with metadata
+        // Returning the paginated list
         return res.status(200).json({
-            // Indicating the request was successful
+            // Success flag
             success: true,
-            // The total number of matching NGOs across all pages
+            // Total volume
             total,
-            // The current page number
+            // Page number
             page: parseInt(page),
-            // The total number of pages
+            // Total pages
             pages: Math.ceil(total / limit),
-            // The array of NGO documents for this page
+            // List of NGOs
             ngos
+        // Closing the response JSON
         });
-    // Catching any database or server errors
+    // Catching errors
     } catch (error) {
-        // Returning a 500 error response
+        // Return 500
         return res.status(500).json({ success: false, message: error.message });
+    // Closing the try-catch block
     }
+// Closing the discoverNGOs controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -183,110 +199,124 @@ export const createPost = async (req, res) => {
 
         // Check if NGO profile exists
         if (!ngo) {
-            // Return 404 if no profile found
+            // Return 404
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
+        // Closing the guard clause
         }
 
-        // Ensure NGO is approved before posting
+        // Ensure NGO is approved
         if (ngo.status !== 'approved') {
-            // Return 403 if not approved
+            // Return 403
             return res.status(403).json({ success: false, message: 'Your NGO must be verified before you can post' });
+        // Closing the approval check
         }
 
-        // Validate post type
+        // Validate type
         if (!type) {
-            // Return 400 if type is missing
+            // Return 400
             return res.status(400).json({ success: false, message: 'Post type is required' });
+        // Closing the type check
         }
 
-        // Validate media URL for photo/video posts
+        // Validate media URL
         if ((type === 'photo' || type === 'video') && !mediaUrl) {
-            // Return 400 if media URL is missing
+            // Return 400
             return res.status(400).json({ success: false, message: 'Media URL is required for photo/video posts' });
+        // Closing the media URL check
         }
 
-        // Create new post document
+        // Create post
         const newPost = await Post.create({
-            // Author NGO ID
+            // NGO ID
             ngoId: ngo._id,
-            // Format of post
+            // Type
             type,
-            // Media link
+            // Media
             mediaUrl: mediaUrl || '',
-            // Post caption
+            // Caption
             caption: caption || '',
-            // Discovery tags
+            // Tags
             tags: tags || [],
-            // Optional fundraiser link
+            // Linked Cause
             linkedCauseId: linkedCauseId || null
         });
 
-        // Atomic push to NGO's posts array
+        // Atomic push to NGO
         await NGO.findByIdAndUpdate(ngo._id, { $push: { posts: newPost._id } });
 
-        // Return success response with created post
+        // Return success
         return res.status(201).json({ success: true, message: 'Post created successfully', post: newPost });
+    // Catching errors
     } catch (error) {
-        // Return 500 error if creation fails
+        // Return 500
         return res.status(500).json({ success: false, message: 'Error creating post', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the createPost controller
 };
 
 // Controller to delete a post
 export const deletePost = async (req, res) => {
-    // Extract post ID from URL parameters
+    // Extract post ID
     const { postId } = req.params;
-    // Try block for post deletion
+    // Try block
     try {
-        // Find post by ID
+        // Find post
         const post = await Post.findById(postId);
-        // Check if post exists
+        // Check existence
         if (!post) {
-            // Return 404 if not found
+            // Return 404
             return res.status(404).json({ success: false, message: 'Post not found' });
+        // Closing the guard clause
         }
 
-        // Find NGO associated with current user
+        // Find NGO
         const ngo = await NGO.findOne({ userId: req.user._id });
-        // Authorization check for post ownership
+        // Authorization check
         if (!ngo || post.ngoId.toString() !== ngo._id.toString()) {
-            // Return 403 if unauthorized
+            // Return 403
             return res.status(403).json({ success: false, message: 'Unauthorized to delete this post' });
+        // Closing the auth check
         }
 
-        // Atomic pull from NGO's posts array
+        // Atomic pull from NGO
         await NGO.findByIdAndUpdate(ngo._id, { $pull: { posts: postId } });
-        // Delete post document
+        // Delete post
         await Post.findByIdAndDelete(postId);
 
-        // Return success response
+        // Return success
         return res.status(200).json({ success: true, message: 'Post deleted successfully' });
+    // Catching errors
     } catch (error) {
-        // Return 500 error if deletion fails
+        // Return 500
         return res.status(500).json({ success: false, message: 'Error deleting post', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the deletePost controller
 };
 
-// Controller to get all posts for a specific NGO (their profile feed)
+// Controller to get all posts for a specific NGO
 export const getNGOPosts = async (req, res) => {
-    // Extracting the NGO ID from the URL parameters
+    // Extract ID
     const { id } = req.params;
-    // Starting the try block
+    // Try block
     try {
-        // Querying the database for all posts by this NGO, sorted newest first
+        // Find posts
         const posts = await Post.find({ ngoId: id })
-            // Sorting in reverse chronological order for the timeline
+            // Sort
             .sort({ createdAt: -1 })
-            // Populating the linked cause details if the post has a donate button
+            // Populate cause
             .populate('linkedCauseId', 'title goalAmount raisedAmount status');
 
-        // Returning the array of posts
+        // Return success
         return res.status(200).json({ success: true, count: posts.length, posts });
-    // Catching any data retrieval errors
+    // Catching errors
     } catch (error) {
-        // Returning a 500 error
+        // Return 500
         return res.status(500).json({ success: false, message: error.message });
+    // Closing the try-catch block
     }
+// Closing the getNGOPosts controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -295,119 +325,119 @@ export const getNGOPosts = async (req, res) => {
 
 // Controller to follow an NGO
 export const followNGO = async (req, res) => {
-    // Extract target ID from URL parameters
+    // Extract ID
     const { id } = req.params;
-    // Try block for follow action
+    // Try block
     try {
-        // Check if target NGO exists
+        // Check NGO existence
         const ngoExists = await NGO.exists({ _id: id });
-        // Guard clause for non-existent NGO
+        // Guard clause
         if (!ngoExists) {
-            // Return 404 if not found
+            // Return 404
             return res.status(404).json({ success: false, message: 'NGO not found' });
+        // Closing the guard clause
         }
 
-        // Atomic update for User's following list
+        // Atomic update user following
         const updatedUser = await User.findByIdAndUpdate(
-            // Current user ID
             req.user._id,
-            // Add NGO to following array without duplicates
             { $addToSet: { following: id } },
-            // Return modified document
             { new: true }
         );
 
-        // Re-fetch user to confirm if follow was successful
+        // Re-fetch user
         const user = await User.findById(req.user._id);
-        // Condition to increment follower count
+        // Successful follow check
         if (user.following.includes(id)) {
-             // Atomic increment for NGO's follower metric
+             // Atomic increment NGO followers
              await NGO.findByIdAndUpdate(id, { $inc: { followerCount: 1 } });
-             // Return success response
+             // Return success
              return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
+        // Closing the success check
         }
 
-        // Return error if already following
+        // Return 400
         return res.status(400).json({ success: false, message: 'Already following this NGO' });
+    // Catching errors
     } catch (error) {
-        // Return 500 if error occurs
+        // Return 500
         return res.status(500).json({ success: false, message: 'Error following NGO', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the followNGO controller
 };
 
 // Controller to unfollow an NGO
 export const unfollowNGO = async (req, res) => {
-    // Extract target ID from URL parameters
+    // Extract ID
     const { id } = req.params;
-    // Try block for unfollow action
+    // Try block
     try {
-        // Atomic pull from User's following list
+        // Atomic pull from user
         const user = await User.findByIdAndUpdate(
-            // Current user ID
             req.user._id,
-            // Remove NGO from following array
             { $pull: { following: id } }
         );
 
-        // Check if user was previously following
+        // Check previous status
         if (user.following.includes(id)) {
-            // Atomic decrement for NGO's follower metric
+            // Atomic decrement NGO followers
             await NGO.findByIdAndUpdate(id, { $inc: { followerCount: -1 } });
-            // Return success response
+            // Return success
             return res.status(200).json({ success: true, message: 'Successfully unfollowed NGO' });
+        // Closing the success check
         }
 
-        // Return error if not currently following
+        // Return 400
         return res.status(400).json({ success: false, message: 'Not following this NGO' });
+    // Catching errors
     } catch (error) {
-        // Return 500 if error occurs
+        // Return 500
         return res.status(500).json({ success: false, message: 'Error unfollowing NGO', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the unfollowNGO controller
 };
 
 // ═══════════════════════════════════════════════════════════════
 //  NGO CREATOR DASHBOARD — Analytics (post reach, donor conversions)
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to get the NGO's analytics dashboard data using aggregation
+// Controller to get the NGO's analytics dashboard data
 export const getNGODashboard = async (req, res) => {
-    // Try block for analytics computation
+    // Try block
     try {
-        // Find NGO associated with current user
+        // Find local NGO
         const ngo = await NGO.findOne({ userId: req.user._id });
 
-        // Guard clause for missing profile
+        // Guard clause
         if (!ngo) {
-            // Return 404 if no profile found
+            // Return 404
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
+        // Closing the guard clause
         }
 
-        // Aggregate post statistics in a single query
+        // Social aggregation
         const postStats = await Post.aggregate([
-            // Filter posts by this NGO
+            // Filter match
             { $match: { ngoId: ngo._id } },
-            // Group and sum metrics
+            // Group sum
             {
                 $group: {
-                    // Singular output group
+                    // ID
                     _id: null,
-                    // Sum total reach
+                    // Sums
                     totalReach: { $sum: '$reach' },
-                    // Sum total likes
                     totalLikes: { $sum: '$likes' },
-                    // Sum total shares
                     totalShares: { $sum: '$shares' },
-                    // Sum total donate clicks
                     totalDonateClicks: { $sum: '$donateClicks' },
-                    // Sum total comments from array size
                     totalComments: { $sum: { $size: '$comments' } },
-                    // Count total posts
                     count: { $sum: 1 }
                 }
             }
         ]);
 
-        // Fallback to zero stats if no posts found
+        // Fallback stats
         const stats = postStats[0] || {
             totalReach: 0,
             totalLikes: 0,
@@ -417,64 +447,53 @@ export const getNGODashboard = async (req, res) => {
             count: 0
         };
 
-        // Fetch all causes for this NGO
+        // Fetch causes
         const causes = await Cause.find({ ngoId: ngo._id });
-        // Count active causes
+        // Active count
         const activeCauses = causes.filter(c => c.status === 'active').length;
-        // Count completed causes
+        // Completed count
         const completedCauses = causes.filter(c => c.status === 'completed').length;
 
-        // Aggregate successful donations count
+        // Transaction count
         const totalDonations = await Donation.countDocuments({ ngoId: ngo._id, status: 'paid' });
 
-        // Compile and return unified dashboard analytics
+        // Response compilation
         return res.status(200).json({
-            // Flag success
+            // Success flag
             success: true,
-            // Core profile snapshot
+            // Snapshot
             profile: {
-                // NGO Name
                 name: ngo.name,
-                // Follower count
                 followers: ngo.followerCount,
-                // Trust score
                 transparencyScore: ngo.transparencyScore,
-                // Total fundraising total
                 totalRaised: ngo.totalRaised,
-                // Validation status
                 status: ngo.status
             },
-            // Social engagement metrics
+            // Social numbers
             postAnalytics: {
-                // Post volume
                 totalPosts: stats.count,
-                // Impression reach
                 totalReach: stats.totalReach,
-                // Social proof likes
                 totalLikes: stats.totalLikes,
-                // Reshare volume
                 totalShares: stats.totalShares,
-                // Interaction comments
                 totalComments: stats.totalComments,
-                // Conversion clicks
                 totalDonateClicks: stats.totalDonateClicks
             },
-            // Fundraising performance metrics
+            // Mission numbers
             causeAnalytics: {
-                // Campaign volume
                 totalCauses: causes.length,
-                // Ongoing campaigns
                 activeCauses,
-                // Success stories
                 completedCauses,
-                // Transaction count
                 totalDonations
             }
+        // Closing the response JSON
         });
+    // Catching errors
     } catch (error) {
-        // Return 500 if computation fails
+        // Return 500
         return res.status(500).json({ success: false, message: 'Error fetching dashboard data', error: error.message });
+    // Closing the try-catch block
     }
+// Closing the getNGODashboard controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -483,20 +502,22 @@ export const getNGODashboard = async (req, res) => {
 
 // Controller to get all causes belonging to a specific NGO
 export const getNGOCauses = async (req, res) => {
-    // Extracting the NGO ID from the URL parameters
+    // Extract ID
     const { id } = req.params;
-    // Starting the try block
+    // Try block
     try {
-        // Querying all causes linked to this NGO, showing active ones first
+        // Query database
         const causes = await Cause.find({ ngoId: id })
-            // Sorting active causes first, then by creation date
+            // Sort
             .sort({ status: 1, createdAt: -1 });
 
-        // Returning the list of causes
+        // Return array
         return res.status(200).json({ success: true, count: causes.length, causes });
-    // Catching any errors
+    // Catching errors
     } catch (error) {
-        // Returning a 500 error
+        // Return 500
         return res.status(500).json({ success: false, message: error.message });
+    // Closing the try-catch block
     }
+// Closing the getNGOCauses controller
 };
