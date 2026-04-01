@@ -2,6 +2,8 @@
 import Cause from '../models/Cause.js';
 // Importing the NGO model to manage organizational profiles and verification statuses
 import NGO from '../models/NGO.js';
+// Importing the Cloudinary upload utility to handle asset hosting
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 /**
  * Cause Controller
@@ -14,29 +16,37 @@ import NGO from '../models/NGO.js';
 
 // Controller to create a new campaign or charitable cause
 export const createCause = async (req, res) => {
-    // Destructuring all essential mission fields from the request body
-    const { title, description, goalAmount, deadline, coverImage } = req.body;
+    // Destructuring essential mission fields from the request body
+    const { title, description, goalAmount, deadline } = req.body;
     // Starting the try block to manage database operations and potential failures
     try {
-        // Finding the NGO profile associated with the currently logged-in user through their unique user ID
+        // Finding the NGO profile associated with the currently logged-in user
         const ngo = await NGO.findOne({ userId: req.user._id });
 
         // Guard clause to check if the NGO profile exists in the system
         if (!ngo) {
-            // Returning a 404 response if no NGO record is linked to this authenticated user
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
         }
 
         // Ensuring the NGO is verified by the platform admin before allowing them to fundraise
         if (!ngo.verified) {
-            // Returning a 403 Forbidden error if the organization's documents are still pending review
             return res.status(403).json({ success: false, message: 'Your NGO must be verified before you can create a cause' });
         }
 
         // Basic validation checking for mandatory title, description, and goal amount fields
         if (!title || !description || !goalAmount) {
-            // Returning a 400 Bad Request error if any required data is missing from the payload
             return res.status(400).json({ success: false, message: 'Title, description, and goal amount are required' });
+        }
+
+        // Handling cover image upload if a file was provided in the request
+        let coverImageUrl = '';
+        if (req.file) {
+            // Uploading the temporarily stored file to Cloudinary
+            const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
+            // Updating the URL if the upload was successful
+            if (cloudinaryResponse) {
+                coverImageUrl = cloudinaryResponse.secure_url;
+            }
         }
 
         // Creating the new cause document in the MongoDB database
@@ -52,13 +62,13 @@ export const createCause = async (req, res) => {
             // Assigning the optional deadline date if provided or null for open-ended missions
             deadline: deadline || null,
             // Storing the cover image URL hosted on Cloudinary or setting an empty string
-            coverImage: coverImage || ''
+            coverImage: coverImageUrl || ''
         });
 
-        // Atomically updating the NGO's document to push the new cause's ID into their cause history array
+        // Atomically updating the NGO's document to push the new cause's ID
         await NGO.findByIdAndUpdate(ngo._id, { $push: { causes: newCause._id } });
 
-        // Returning the successfully created cause document and a positive status message back to the client
+        // Returning the successfully created cause document
         return res.status(201).json({ success: true, message: 'Cause created successfully', cause: newCause });
     // Catching any database errors, validation failures, or server-side issues
     } catch (error) {

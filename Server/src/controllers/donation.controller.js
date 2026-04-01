@@ -6,85 +6,136 @@ import User from '../models/User.js';
 import NGO from '../models/NGO.js';
 // Importing the Cause model to update fundraising progress for specific missions
 import Cause from '../models/Cause.js';
+// Importing the configured Razorpay instance for payment gateway interactions
+import razorpay from '../config/razorpay.js';
+// Importing the native crypto module for secure signature verification
+import crypto from 'crypto';
 
 /**
  * Donation Controller
- * Handles processing of incoming donations, auditing history, and detailed record retrieval.
+ * Handles the end-to-end lifecycle of a donation: Ordering, Verification, and Auditing.
  */
 
 // ═══════════════════════════════════════════════════════════════
-//  PROCESS DONATION — Capturing and distributing new funds
+//  CREATE ORDER — Step 1: Initialize transaction with Razorpay
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to initiate and process a new donation transaction
-export const processDonation = async (req, res) => {
-    // Destructuring all essential transaction data from the request body
-    const { causeId, ngoId, amount, razorpayOrderId, isRecurring, frequency } = req.body;
-    // Starting the try block to manage atomic updates and potential failures
+// Controller to create a new Razorpay order for the frontend checkout
+export const createOrder = async (req, res) => {
+    // Extracting donor's intent: which mission and how much to donate
+    const { causeId, amount } = req.body; // Amount in INR
+    // Starting the order creation process
     try {
-        // Basic validation checking for mandatory mission, organization, and currency fields
-        if (!causeId || !ngoId || !amount || !razorpayOrderId) {
-            // Returning a 400 response if any transaction metadata is missing
-            return res.status(400).json({ success: false, message: 'Missing required donation fields' });
+        // Validating presence of essential mission and financial data
+        if (!causeId || !amount) {
+            return res.status(400).json({ success: false, message: 'Cause ID and amount are required' });
         }
 
-        // Verifying that the target cause actually exists in the database
+        // Verifying that the target mission actually exists
         const cause = await Cause.findById(causeId);
-        // Verifying that the recipient NGO actually exists in the database
-        const ngo = await NGO.findById(ngoId);
+        if (!cause) return res.status(404).json({ success: false, message: 'Cause not found' });
 
-        // Guard clause to ensure both the mission and organization are valid
-        if (!cause || !ngo) {
-            // Returning a 404 response if either record is missing
-            return res.status(404).json({ success: false, message: 'Cause or NGO not found' });
+        // Defining the Razorpay order options (amount must be in smallest currency unit: paise)
+        const options = {
+            amount: amount * 100, // INR to Paise conversion
+            currency: "INR",
+            // Generating a unique receipt reference for this internal order attempt
+            receipt: `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        };
+
+        // Calling the Razorpay API to generate the professional Order ID
+        const order = await razorpay.orders.create(options);
+
+        // Returning the generated order details to the frontend to trigger the checkout modal
+        return res.status(201).json({ success: true, order });
+    // Catching any gateway connection or configuration errors
+    } catch (error) {
+        // Returning a 500 status with specific failure details
+        return res.status(500).json({ success: false, message: 'Error creating Razorpay order', error: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  VERIFY PAYMENT — Step 2: Validate signature and commit to DB
+// ═══════════════════════════════════════════════════════════════
+
+// Controller to verify the payment authenticity and record the successful donation
+export const verifyPayment = async (req, res) => {
+    // Destructuring signature components provided by Razorpay after successful payment
+    const { 
+        razorpay_order_id, 
+        razorpay_payment_id, 
+        razorpay_signature,
+        causeId, 
+        amount,
+        isRecurring,
+        frequency
+    } = req.body;
+
+    // Starting the cryptographic validation and DB update process
+    try {
+        // Constructing the expected signature string as per Razorpay security policy
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        // Generating a HMAC hash using our secret key to compare against the provided signature
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body.toString())
+            .digest("hex");
+
+        // Checking if the generated hash matches the client-provided signature
+        const isAuthentic = expectedSignature === razorpay_signature;
+
+        // Security Guard: Blocking the transaction if signatures don't match
+        if (!isAuthentic) {
+            return res.status(400).json({ success: false, message: 'Payment verification failed: Invalid signature' });
         }
 
-        // Creating the new internal donation record with a default paid status
+        // ─── If authentic, proceed with recorded donation ───
+
+        // Finding the mission details to retrieve the recipient NGO
+        const cause = await Cause.findById(causeId);
+        if (!cause) return res.status(404).json({ success: false, message: 'Attributed cause no longer exists' });
+
+        // Creating the successful donation record in our database
         const newDonation = await Donation.create({
-            // Linking the transaction to the currently authenticated donor
             donorId: req.user._id,
-            // Associating the funds with the recipient organization
-            ngoId,
-            // Linking the money to a specific fundraising mission
+            ngoId: cause.ngoId,
             causeId,
-            // Storing the exact amount donated
-            amount,
-            // Associating the record with the external Razorpay order ID for auditing
-            razorpayOrderId,
-            // Manually setting status to 'paid' (simulating successful gateway response)
-            status: 'paid',
-            // Flagging if this is a repeat/subscription donation
+            amount: Number(amount),
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+            status: 'paid', // Verified!
             isRecurring: isRecurring || false,
-            // Storing the interval for recurring gifts (weekly, monthly, once)
             frequency: frequency || 'once'
         });
 
-        // Updating the User's profile to record their active participation
+        // Updating the User’s contribution history and social leaderboard score
         await User.findByIdAndUpdate(req.user._id, { 
-            // Pushing the new donation ID into their personal contribution history array
             $push: { donationHistory: newDonation._id },
-            // Rewarding the donor with leaderboard points for their social impact contribution
             $inc: { leaderboardScore: 10 }
         });
 
         // Updating the Cause's financial state to reflect the new donation
         await Cause.findByIdAndUpdate(causeId, { 
-            // Incrementing the total amount raised and the unique donor counter
-            $inc: { raisedAmount: amount, donorCount: 1 } 
+            $inc: { raisedAmount: Number(amount), donorCount: 1 } 
         });
 
-        // Updating the NGO's high-level performance metrics
-        await NGO.findByIdAndUpdate(ngoId, { 
-            // Incrementing the organization's total lifetime fundraising amount
-            $inc: { totalRaised: amount } 
+        // Updating the NGO's total fundraising reach
+        await NGO.findByIdAndUpdate(cause.ngoId, { 
+            $inc: { totalRaised: Number(amount) } 
         });
 
-        // Returning the finalized donation record and a success message to the client
-        return res.status(201).json({ success: true, message: 'Donation processed successfully', donation: newDonation });
-    // Catching any database connection issues or update failures
+        // Returning the success response including the verified donation record
+        return res.status(200).json({ 
+            success: true, 
+            message: 'Donation verified and processed successfully', 
+            donation: newDonation 
+        });
+
+    // Catching any verification or database update failures
     } catch (error) {
-        // Returning a 500 status code with the specific internal failure details
-        return res.status(500).json({ success: false, message: 'Error processing donation', error: error.message });
+        // Returning 500 status message for server-side processing errors
+        return res.status(500).json({ success: false, message: 'Internal server error during verification', error: error.message });
     }
 };
 
@@ -117,20 +168,14 @@ export const getDonationHistory = async (req, res) => {
 
         // Finding donation records matching the authorized query filter
         const donations = await Donation.find(query)
-            // Populating basic donor identity fields for display
             .populate('donorId', 'name email')
-            // Populating organization identity for clarity
             .populate('ngoId', 'name logo')
-            // Populating the mission title to show where the money went
             .populate('causeId', 'title')
-            // Sorting chronologically to show the most recent gifts at the top
             .sort({ createdAt: -1 });
 
         // Returning the array of transaction logs and the total count to the client
         return res.status(200).json({ success: true, count: donations.length, donations });
-    // Catching any authentication or database retrieval errors
     } catch (error) {
-        // Returning a 500 status message with the failure details
         return res.status(500).json({ success: false, message: 'Error fetching donation history', error: error.message });
     }
 };
@@ -139,32 +184,20 @@ export const getDonationHistory = async (req, res) => {
 //  DONATION DETAILS — In-depth receipt and status lookup
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to retrieve the specific details and status of a single transaction by ID
 export const getDonationDetails = async (req, res) => {
-    // Extracting the transaction ID from the URL parameters
     const { id } = req.params;
-    // Starting the try block for detailed lookup
     try {
-        // Finding the specific donation and populating all nested metadata for a full receipt view
         const donation = await Donation.findById(id)
-            // Enlisting donor contact details
             .populate('donorId', 'name email')
-            // Enlisting organizational mission and branding
             .populate('ngoId', 'name logo location bio')
-            // Enlisting the fundraising mission's progress and goals
             .populate('causeId', 'title description coverImage goalAmount raisedAmount');
 
-        // Guard clause ensuring the requested record exists in the system
         if (!donation) {
-            // Returning 404 if no record matches the provided transaction ID
             return res.status(404).json({ success: false, message: 'Donation record not found' });
         }
 
-        // Returning the complete populated donation receipt to the client UI
         return res.status(200).json({ success: true, donation });
-    // Catching any parsing or lookup errors during retrieval 
     } catch (error) {
-        // Returning a 500 status code with the caught error details 
         return res.status(500).json({ success: false, message: 'Error fetching donation details', error: error.message });
     }
 };

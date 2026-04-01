@@ -15,6 +15,8 @@ import {
 import { protect } from '../middlewares/auth.middleware.js';
 // Importing the authorize middleware to restrict routes by role
 import { authorize } from '../middlewares/role.middleware.js';
+// Importing the upload middleware for handling social media media segments
+import { upload } from '../middlewares/multer.js';
 
 // Creating a new router instance for the post module
 const router = express.Router();
@@ -38,7 +40,8 @@ router.post('/interact', interactWithPost);
 // ─── NGO-only routes — Post management ───
 
 // End-point for verified NGOs to publish a new social media post
-router.post('/create', authorize('ngo'), createPost);
+// Using Multer to extract the 'media' file before the controller processes the upload to Cloudinary
+router.post('/create', authorize('ngo'), upload.single('media'), createPost);
 
 // Exporting the post router configuration
 export default router;

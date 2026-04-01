@@ -23,6 +23,8 @@ import {
 import { protect } from '../middlewares/auth.middleware.js';
 // Importing the authorize middleware to restrict routes by role
 import { authorize } from '../middlewares/role.middleware.js';
+// Importing the upload middleware for handling organization branding updates
+import { upload } from '../middlewares/multer.js';
 
 // Creating a new router instance for the NGO module
 const router = express.Router();
@@ -54,8 +56,9 @@ router.post('/:id/unfollow', unfollowNGO);
 
 // ─── NGO-only routes — Must be logged in as an NGO ───
 
-// End-point for NGOs to update their own profile
-router.put('/:id', authorize('ngo'), updateNGOProfile);
+// End-point for NGOs to update their own profile including logo upload
+// Using Multer to extract the 'logo' file before updating the profile URL via Cloudinary
+router.put('/:id', authorize('ngo'), upload.single('logo'), updateNGOProfile);
 
 // End-point for NGOs to create a new social media post
 router.post('/posts/create', authorize('ngo'), createPost);

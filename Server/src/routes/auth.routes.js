@@ -25,14 +25,21 @@ import {
 import { protect } from '../middlewares/auth.middleware.js';
 // Importing middleware to authorize specific user roles
 import { authorize } from '../middlewares/role.middleware.js';
+// Importing our upload middleware for handling multi-part attachment registration
+import { upload } from '../middlewares/multer.js';
 
 // Initializing the express router instance
 const router = express.Router();
 
 // End-point for a donor account registration that requires an onboarding quiz
 router.post('/register/donor', registerDonor);
-// End-point for an NGO account registration with a status set to pending
-router.post('/register/ngo', registerNGO);
+// End-point for an NGO account registration with logo and legal doc attachments
+// Using Multer to extract 'logo', 'doc80G', and 'docFCRA' before profile creation
+router.post('/register/ngo', upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'doc80G', maxCount: 1 },
+    { name: 'docFCRA', maxCount: 1 }
+]), registerNGO);
 // End-point to authenticate and provide a session cookie for all users
 router.post('/login', login);
 // End-point to initiate a secure password reset via OTP to email
