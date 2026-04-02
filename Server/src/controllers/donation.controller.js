@@ -10,6 +10,8 @@ import Cause from '../models/Cause.js';
 import razorpay from '../config/razorpay.js';
 // Importing the native crypto module for secure signature verification
 import crypto from 'crypto';
+// Importing our real-time engine to emit global donation alerts
+import { getIO } from '../socket.js';
 
 /**
  * Donation Controller
@@ -126,10 +128,25 @@ export const verifyPayment = async (req, res) => {
         });
 
         // Returning the success response including the verified donation record
-        return res.status(200).json({ 
+        res.status(200).json({ 
             success: true, 
             message: 'Donation verified and processed successfully', 
             donation: newDonation 
+        });
+
+        // 🚀 Real-time Engagement: Emitting a broadcast event to all connected clients
+        // Accessing the global real-time engine to publish a message
+        getIO().emit('new_donation', {
+            // Identifying the generous donor who just completed the transaction
+            donorName: req.user.name,
+            // Attaching the exact financial amount contributed (public proof)
+            amount: newDonation.amount,
+            // Attaching the cause title so others can see which mission was supported
+            causeTitle: cause.title,
+            // Providing the ID so the frontend can redirect users to that mission
+            causeId: cause._id,
+            // Timestamping the event for live feed sorting purposes
+            timestamp: newDonation.createdAt
         });
 
     // Catching any verification or database update failures
