@@ -19,7 +19,9 @@ import {
     // NGO verification controller for admins
     verifyNGO,
     // Pending NGO lookup controller for admins
-    getPendingNGOs
+    getPendingNGOs,
+    // Unified registration entry point
+    register
 } from '../controllers/auth.controller.js';
 // Importing middleware to protect routes that require authentication
 import { protect } from '../middlewares/auth.middleware.js';
@@ -32,6 +34,8 @@ import { upload } from '../middlewares/multer.js';
 const router = express.Router();
 
 // End-point for a donor account registration that requires an onboarding quiz
+router.post('/register', register);
+
 router.post('/register/donor', registerDonor);
 // End-point for an NGO account registration with logo and legal doc attachments
 // Using Multer to extract 'logo', 'doc80G', and 'docFCRA' before profile creation

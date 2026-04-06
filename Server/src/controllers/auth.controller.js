@@ -6,6 +6,8 @@ import NGO from '../models/NGO.js';
 import jwt from 'jsonwebtoken';
 // Importing crypto for secure random number generation during password resets
 import crypto from 'crypto';
+// Importing the Cloudinary upload utility for NGO registration file handling
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 // Reusable function to create a JWT and set it as an httpOnly session cookie
 const generateTokenAndSetCookie = (res, user) => {
@@ -34,6 +36,30 @@ const generateTokenAndSetCookie = (res, user) => {
     // Returning the newly created token for any further server-side processing
     return token;
 // Closing the helper function
+};
+
+// Unified registration entry point that dispatches to specific role handlers
+export const register = async (req, res) => {
+    const { role } = req.body;
+    
+    // Defaulting to donor if no role is explicitly provided
+    if (!role || role === 'donor') {
+        // Enforcing default interests if the frontend didn't provide any yet
+        if (!req.body.interests) {
+            req.body.interests = [INTEREST_CATEGORIES[0]]; // Default to first category
+        }
+        return registerDonor(req, res);
+    }
+    
+    if (role === 'ngo') {
+        // Providing fallback defaults for mandatory NGO fields to prevent initial setup failure
+        if (!req.body.bio) req.body.bio = 'New organization on DonerHQ.';
+        if (!req.body.location) req.body.location = 'India';
+        if (!req.body.category) req.body.category = 'Sustainability';
+        return registerNGO(req, res);
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid role provided' });
 };
 
 // End-point to register a new donor account with an interest-based onboarding quiz

@@ -8,6 +8,8 @@ import Post from '../models/Post.js';
 import Cause from '../models/Cause.js';
 // Importing the Donation model for the NGO creator dashboard analytics
 import Donation from '../models/Donation.js';
+// Importing the Cloudinary upload utility to handle logo and media hosting
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 // ═══════════════════════════════════════════════════════════════
 //  NGO PROFILE — Public facing page (like an Instagram profile)
