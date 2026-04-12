@@ -20,6 +20,9 @@ const donationSchema = new mongoose.Schema({
     // The official order identification from the Razorpay API
     razorpayOrderId: { type: String, required: true },
     
+    // The unique payment confirmation ID returned after successful payment completion
+    razorpayPaymentId: { type: String },
+    
     // Payment status tracking for the backend dashboard
     status: { 
         type: String, 

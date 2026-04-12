@@ -43,17 +43,23 @@ export const createPost = async (req, res) => {
         // Handling media upload if a file is present in the request
         let mediaUrl = '';
         if (req.file) {
+            console.log('📁 Multer received file:', { name: req.file.originalname, size: req.file.size, path: req.file.path });
             // Uploading the temporarily stored file to Cloudinary
             const cloudinaryResponse = await uploadOnCloudinary(req.file.path);
             // Updating the URL if the upload was successful
             if (cloudinaryResponse) {
                 mediaUrl = cloudinaryResponse.secure_url;
+                console.log('☁️  Cloudinary URL:', mediaUrl);
+            } else {
+                console.error('❌ Cloudinary returned null for file:', req.file.originalname);
             }
+        } else {
+            console.log('⚠️  No req.file received by multer. Body keys:', Object.keys(req.body));
         }
 
         // Validating media presence for visual post types which require a URL
         if ((type === 'photo' || type === 'video') && !mediaUrl) {
-            return res.status(400).json({ success: false, message: 'Media file is required for photo/video posts' });
+            return res.status(400).json({ success: false, message: 'Media file is required for photo/video posts. The upload may have failed — check server logs.' });
         }
 
         // Creating and saving the fresh post document into the MongoDB collection

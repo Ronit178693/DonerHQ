@@ -19,7 +19,11 @@ import {
     // NGO verification controller for admins
     verifyNGO,
     // Pending NGO lookup controller for admins
-    getPendingNGOs
+    getPendingNGOs,
+    // Unified registration entry point
+    register,
+    // Administrative user lookup controller
+    getAllUsers
 } from '../controllers/auth.controller.js';
 // Importing middleware to protect routes that require authentication
 import { protect } from '../middlewares/auth.middleware.js';
@@ -31,7 +35,13 @@ import { upload } from '../middlewares/multer.js';
 // Initializing the express router instance
 const router = express.Router();
 
-// End-point for a donor account registration that requires an onboarding quiz
+// End-point for a unified account registration that handles branching to Donor or NGO logic
+router.post('/register', upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'doc80G', maxCount: 1 },
+    { name: 'docFCRA', maxCount: 1 }
+]), register);
+
 router.post('/register/donor', registerDonor);
 // End-point for an NGO account registration with logo and legal doc attachments
 // Using Multer to extract 'logo', 'doc80G', and 'docFCRA' before profile creation
@@ -56,6 +66,8 @@ router.get('/me', protect, getMe);
 router.post('/admin/verify-ngo', protect, authorize('admin'), verifyNGO);
 // Administrative end-point to list all NGO registration requests currently pending
 router.get('/admin/pending-ngos', protect, authorize('admin'), getPendingNGOs);
+// Administrative end-point to list all users in the system for platform moderation
+router.get('/admin/users', protect, authorize('admin'), getAllUsers);
 
 // Exporting the configured router as default
 export default router;

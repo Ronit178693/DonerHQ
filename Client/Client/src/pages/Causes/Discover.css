@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════════════════════════
+   Discover Causes Page
+   ═══════════════════════════════════════════════════════════════ */
+.discover-page {
+  padding: var(--space-12) 0 var(--space-24);
+}
+
+.discover-header {
+  margin-bottom: var(--space-10);
+}
+
+.discover-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-2);
+}
+
+.discover-filters {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-6);
+}
+
+.filter-chip {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--outline-variant);
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.filter-chip:hover,
+.filter-chip.active {
+  background: rgba(185, 255, 232, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-top: var(--space-6);
+  max-width: 480px;
+}
+.search-bar input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  flex: 1;
+}
+.search-bar input::placeholder {
+  color: var(--outline);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-16);
+  color: var(--on-surface-variant);
+}
+.empty-state h3 {
+  color: var(--outline);
+  margin-bottom: var(--space-2);
+}

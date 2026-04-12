@@ -14,21 +14,27 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Defining a helper function to send emails from our application
+// Defined a helper function to send emails from our application
 const sendEmail = async (to, subject, htmlContent) => {
-    // Constructing the mail options with recipients and content
-    const mailOptions = {
-        // Setting the sender display name and email address
-        from: `"DonerHQ" <${process.env.EMAIL_USER}>`,
-        // Setting the target email address
-        to,
-        // Setting the subject line of the email
-        subject,
-        // Setting the main body of the email as HTML content
-        html: htmlContent
-    };
-    // Attempting to send the email using our transport instance
-    await transporter.sendMail(mailOptions);
+    try {
+        // Constructing the mail options with recipients and content
+        const mailOptions = {
+            from: `"DonerHQ Impact" <${process.env.EMAIL_USER}>`,
+            to,
+            subject,
+            html: htmlContent
+        };
+        
+        // Attempting to send the email using our transport instance
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`📧 Email sent to ${to}: ${info.messageId}`);
+        return info;
+    } catch (error) {
+        console.error(`❌ Nodemailer Error sending to ${to}:`, error.message);
+        // We don't throw here to avoid crashing the whole request, 
+        // but we'll know it failed via logs.
+        return null;
+    }
 };
 
 // Exporting the sendEmail helper as default

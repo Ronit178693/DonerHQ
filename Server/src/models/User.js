@@ -149,8 +149,8 @@ const userSchema = new mongoose.Schema({
 
     // OTP for password reset functionality
     otp: {
-        // Data type is number
-        type: Number,
+        // Data type is string (to store hashed hex)
+        type: String,
         // Defaults to null
         default: null
     },

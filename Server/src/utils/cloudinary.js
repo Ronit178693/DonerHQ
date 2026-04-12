@@ -1,5 +1,7 @@
 // Importing the fs module for managing local file system operations
 import fs from 'fs';
+// Importing path for file manipulation
+import path from 'path';
 // Importing the configured Cloudinary version 2 library instance
 import cloudinary from '../config/cloudinary.js';
 
@@ -7,6 +9,7 @@ import cloudinary from '../config/cloudinary.js';
  * Cloudinary Upload Helper
  * This function takes a local file path, uploads it to the Cloudinary CMS,
  * and then cleans up the temporary local file regardless of the result.
+ * Falls back to local storage if Cloudinary is unavailable.
  */
 const uploadOnCloudinary = async (localFilePath) => {
     // Starting the try block to process the upload
@@ -23,7 +26,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         });
 
         // Logging the successful upload secure URL for debugging purposes
-        console.log("✅ File uploaded to Cloudinary Successfully:", response.url);
+        console.log("✅ File uploaded to Cloudinary:", response.secure_url);
         
         // Deleting the temporary file from the local server to save disk space
         fs.unlinkSync(localFilePath);
@@ -33,13 +36,39 @@ const uploadOnCloudinary = async (localFilePath) => {
         
     // Catching any Cloudinary or upload process errors
     } catch (error) {
-        // Checking if the file exists before attempting to clean up on failure
-        if (fs.existsSync(localFilePath)) {
-            // Deleting the temporary file on local server to maintain clean storage
-            fs.unlinkSync(localFilePath);
+        // Log the full error so we can diagnose upload failures
+        console.error("❌ Cloudinary upload FAILED:", error.message || error);
+        console.log("📂 Falling back to local file storage...");
+        
+        // ─── LOCAL FALLBACK ───
+        // Move the file from temp to a persistent uploads directory
+        try {
+            const uploadsDir = path.resolve('./public/uploads');
+            // Ensure the uploads directory exists
+            if (!fs.existsSync(uploadsDir)) {
+                fs.mkdirSync(uploadsDir, { recursive: true });
+            }
+            
+            const filename = path.basename(localFilePath);
+            const destPath = path.join(uploadsDir, filename);
+            
+            // Move the file (rename it from temp to uploads)
+            fs.renameSync(localFilePath, destPath);
+            
+            // Build a local URL that Express will serve
+            const localUrl = `http://localhost:${process.env.PORT || 5000}/uploads/${filename}`;
+            console.log("✅ File saved locally:", localUrl);
+            
+            // Return an object mimicking Cloudinary's response shape
+            return { secure_url: localUrl, url: localUrl };
+        } catch (fallbackError) {
+            console.error("❌ Local fallback also failed:", fallbackError.message);
+            // Clean up the temp file if it still exists
+            if (localFilePath && fs.existsSync(localFilePath)) {
+                fs.unlinkSync(localFilePath);
+            }
+            return null;
         }
-        // Propagating the error information back to the controller
-        return null; 
     }
 };
 

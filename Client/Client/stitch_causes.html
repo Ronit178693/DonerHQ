@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&amp;family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-container": "#00cbfd",
+                        "surface-container-low": "#10131a",
+                        "inverse-surface": "#f9f9ff",
+                        "secondary-dim": "#2aedd8",
+                        "error": "#ff716c",
+                        "on-background": "#ecedf6",
+                        "surface-variant": "#22262f",
+                        "primary-dim": "#00e9bf",
+                        "on-secondary-fixed-variant": "#00675d",
+                        "on-surface": "#ecedf6",
+                        "on-primary-container": "#005d4b",
+                        "surface-container-high": "#1c2028",
+                        "on-surface-variant": "#a9abb3",
+                        "error-dim": "#d7383b",
+                        "primary": "#b9ffe8",
+                        "on-secondary-fixed": "#004841",
+                        "tertiary": "#67d7ff",
+                        "outline-variant": "#45484f",
+                        "inverse-primary": "#006c57",
+                        "surface-container": "#161a21",
+                        "on-error": "#490006",
+                        "on-primary-fixed-variant": "#006451",
+                        "surface": "#0b0e14",
+                        "surface-bright": "#282c36",
+                        "primary-container": "#15ffd1",
+                        "surface-tint": "#b9ffe8",
+                        "primary-fixed": "#00f9cc",
+                        "tertiary-fixed-dim": "#00bdeb",
+                        "surface-container-lowest": "#000000",
+                        "surface-container-highest": "#22262f",
+                        "inverse-on-surface": "#52555c",
+                        "surface-dim": "#0b0e14",
+                        "on-tertiary": "#00485c",
+                        "background": "#0b0e14",
+                        "secondary-fixed-dim": "#2aedd8",
+                        "on-secondary": "#005c53",
+                        "primary-fixed-dim": "#00e9bf",
+                        "secondary": "#45fce6",
+                        "on-tertiary-fixed-variant": "#00485b",
+                        "tertiary-fixed": "#00cbfd",
+                        "on-secondary-container": "#dcfff8",
+                        "secondary-fixed": "#45fce6",
+                        "on-tertiary-container": "#003e4f",
+                        "on-primary-fixed": "#004436",
+                        "on-tertiary-fixed": "#002733",
+                        "secondary-container": "#006a60",
+                        "error-container": "#9f0519",
+                        "on-primary": "#006653",
+                        "on-error-container": "#ffa8a3",
+                        "outline": "#73757d",
+                        "tertiary-dim": "#00bdeb"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(28, 32, 40, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(185, 255, 232, 0.05);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #b9ffe8 0%, #15ffd1 100%);
+        }
+        .active-glow {
+            box-shadow: 0 0 20px rgba(185, 255, 232, 0.15);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full flex justify-between items-center px-8 h-20 bg-[#0b0e14]/80 backdrop-blur-xl z-50">
+<div class="text-2xl font-bold tracking-tighter text-[#b9ffe8] font-headline">DonerHQ</div>
+<div class="hidden md:flex items-center gap-8 font-headline tracking-tight">
+<a class="text-[#b9ffe8] border-b-2 border-[#b9ffe8] pb-1 transition-colors duration-300" href="#">Discover</a>
+<a class="text-[#ecedf6]/60 hover:text-[#b9ffe8] transition-colors duration-300" href="#">Impact</a>
+<a class="text-[#ecedf6]/60 hover:text-[#b9ffe8] transition-colors duration-300" href="#">Ledger</a>
+<a class="text-[#ecedf6]/60 hover:text-[#b9ffe8] transition-colors duration-300" href="#">Community</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#ecedf6]/60 cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-[#ecedf6]/60 cursor-pointer hover:text-primary transition-colors">account_circle</span>
+</div>
+</nav>
+<!-- SideNavBar (Hidden on this transactional/browse layout to prioritize canvas space per protocol, but defined in JSON) -->
+<!-- Content starts here -->
+<main class="pt-24 pb-12 px-8 max-w-[1440px] mx-auto min-h-screen">
+<!-- Header & Search -->
+<section class="flex flex-col gap-8 mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="font-headline text-5xl font-bold tracking-tight text-on-surface mb-2">Explore Causes</h1>
+<p class="text-on-surface-variant font-medium tracking-wide">Allocating capital to high-integrity global impact nodes.</p>
+</div>
+<div class="relative w-full md:w-96 group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl py-4 pl-12 pr-6 text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary/30 transition-all outline-none" placeholder="Search causes, NGOs, or identifiers..." type="text"/>
+<div class="absolute left-0 bottom-0 w-0 h-[2px] bg-primary transition-all duration-300 group-focus-within:w-full"></div>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="px-6 py-2 rounded-full bg-primary text-on-primary font-bold active-glow whitespace-nowrap transition-all active:scale-95">All</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Education</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Healthcare</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Environment</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Disaster Relief</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Women Empowerment</button>
+<button class="px-6 py-2 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-surface-container-highest whitespace-nowrap transition-all">Rural Dev</button>
+</div>
+</section>
+<div class="flex flex-col lg:flex-row gap-10">
+<!-- Main Grid -->
+<div class="flex-1">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="wide shot of a futuristic solar farm in a vast desert landscape under a clear blue sky with high-tech equipment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9BWS27Nfr-1of-nqVOpVmdySZfxUeubAQykG95y7PhHHPXoy6ERNKdAMLrOGTnyZutz5qQy5rsD_iqo0kfwQRAf9nu5PH6qA9BACHD0k5qY6kMJbCR72uFcIJf8YgEBibmC1-46TuUagm21g_XBm0fpeF4zzrK4bOijf0pbZAQvjUVAmPx3fvX0FohI6QG7p6hzzhXa1av8kJhYkCEPJhpPQza4QjIhF54CZe4aFI9eZao7MvpCKVKuyvUaLEFeYh7vcLE28sfAlA"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Environment</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Reforest the Amazon Delta</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">GreenEarth Initiative</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹3,50,000 raised</span>
+<span class="text-primary font-bold">70%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[70%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹5,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">245 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="stacks of colorful modern books in a bright minimalistic library with soft daylight and clean lines" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCimiMEzO6LAvBikNb0hzR6C5yYc2eEzg1lZsUTPnrtDj_-8exPXAG4dSNqTob7d_p7KbgvzkTZyy0Od2YWWrR_g93Lc22fSr09oeye06my-7vTnORJqFC10l-k9QqXgBYbqQFSj2Kf675jZcje2g6Y2_3lG8YusQTNJ5kODx1qv1yY2uEx92O4ArdvIFfuQKdS72idMh9Pw2n3judPdCUcj6l72LXPhhT3EY3f1zhL_C3tJbiKeWB4hvpfTp-Is9a1bNncp_btNcoE"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Education</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Digital Literacy Nodes</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">EduTech Global</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹1,20,000 raised</span>
+<span class="text-primary font-bold">40%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[40%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹3,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">112 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="close up of high-tech medical laboratory equipment with glowing cyan lights in a sterile environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwSnSvuGfaAKJmaG_JZl4W2LiZBK0yV0NN-Ku6rUKegFCOhg2uFB8fERYMkf4c-QrPxrRhliDqO8Be2pUb4axxvVdE2ZmxZMXMRlAm5RB0-pdbYaAQLcYXkR4-LvvIQuTjgYfpLj0yIbrvsTqTQId8Qu_GJT48RBw9DQcBdn9pTo7MtoGZ32f3j0aWWl1G5FXfo-b_Gf159PabhC7soFARj4RNBVTZU1GO6SILIvFj2up57CIoCRCoAvNsYggwJyHgM3Xnn6Gy_VhQ"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Healthcare</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Mobile Surgery Units</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">HealthReach Foundation</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹8,50,000 raised</span>
+<span class="text-primary font-bold">85%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[85%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹10,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">530 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="group of children laughing in a sunny outdoor classroom setting with warm hazy lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiMC96wbWP8TfpayciHEdtpx5tD--be9XTKNAaK7CQq5bu5v5zebYZxf-zmfRPflw7DcLcRfstyqKDp_inhJRG8PSFkzpnbQC5_Ocl3aZAnF5ZMzUszBJoWsLVFBzCZvbh8v54wjDSb2k_uO2eKiD-Vw8e2A-ZQAip-mCSGxHP0lkYEacHYUlWVKUQVnJsNNYSONXoxJTXhwH9CQxQ2DwmTlWgkjJzkYT-eMbgmfd3-B7MSqU8efGJGOWnwZjWKZUyo4GFiYuP-Xf"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Rural Dev</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Smart Villages Initiative</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">RuralRise</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹2,10,000 raised</span>
+<span class="text-primary font-bold">52%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[52%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹4,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">189 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="aerial view of hands coming together in a circle, representing unity and community support in a high-contrast style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOLQtY_kWSE7Wlx_K6nmCNEjuL-LE_I0JFxKhxiEBS5TNFXRaCT36FONutNRPggXw-qOZE-K3PKAysMY2Ntn9soo9WPV3CzENjRHRTuaOcyNhk9UmWrSCtD0KHDsqvOTYlJ0Nnkoq5gz0McC-QslLi8ppv5KDxhA_sfkv_IwFH_KcPnliWN-h_bJ4Ns58uZ-sYfVTRB9VPsuITZ-5Rm7kdL81xQHFvyxL95P6yN5qvpZnJy_VU8E800t7EU2Jv_OTrHumMhv4bbxV9"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Disaster Relief</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Flood Recovery Network</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">Rapid Response Org</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹6,40,000 raised</span>
+<span class="text-primary font-bold">80%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[80%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹8,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">412 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="glass-card rounded-xl overflow-hidden flex flex-col group transition-all duration-500 hover:-translate-y-2">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="determined woman in professional business attire looking forward with a background of glowing city lights at night" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4BRaUXSkMjH-Bq-wpsCflazBVt9kJ2y5BoVLjavt8U277d4RkqXhhCDiyUiQYve8h0mQ8d11mMgjaMeWl-ElplrZjpKCxsJG3gkF0vl9nlQE2E8M8Mi9PVEdtO7nEgDRUYaASvCSWgWXIF69ixw8TemEZqvc54qO12kDy2J1x8YWiR2LAkPXDlij-YD-kJoJ6uFlysM3HrAj6inZQTsJR-s3V5MICtcnOSP9LCqCYv6W-kudFKXPB8xDqiFJNEO7JGj2r9RVvxB4J"/>
+<div class="absolute top-4 left-4">
+<span class="bg-surface/60 backdrop-blur-md text-primary text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full border border-primary/20">Women Empowerment</span>
+</div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<h3 class="font-headline text-xl font-bold mb-2 group-hover:text-primary transition-colors">Tech Leaders Fellowships</h3>
+<div class="flex items-center gap-1 mb-4">
+<span class="text-xs text-on-surface-variant">FemForward Alliance</span>
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div class="mt-auto space-y-4">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant font-medium">₹4,20,000 raised</span>
+<span class="text-primary font-bold">60%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[60%]"></div>
+</div>
+<div class="flex justify-between items-center mt-2">
+<span class="text-[10px] text-outline uppercase tracking-wider">Goal: ₹7,00,000</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-outline">group</span>
+<span class="text-[10px] text-outline">320 donors</span>
+</div>
+</div>
+</div>
+<button class="w-full py-3 primary-gradient text-on-primary font-bold rounded-lg transition-transform active:scale-95">Donate</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar: Trending Causes -->
+<aside class="w-full lg:w-80 shrink-0">
+<div class="sticky top-28 space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="font-headline text-lg font-bold tracking-tight text-primary">Trending Causes</h2>
+<span class="material-symbols-outlined text-outline text-sm">trending_up</span>
+</div>
+<div class="space-y-4">
+<!-- Mini Card 1 -->
+<div class="glass-card p-3 rounded-lg flex gap-4 hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="top view of lush green forest canopy with rich textures and vibrant green colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI7AQ9jaxGk9FV3B9tWhSPdUzkjhC4X16bWwk0QNLIwXpvGDUJQfPwh9jdWQN6lzpLFmJObpv-mJDi4l42yi-s_y-bk41KjRYYjjqoL6yTYlgZk2SZGB9xLonlXsPJJr5tM6kenr6AnX-9h3aQ127fUIIt6ry_lqd1DnDfPcvQI9QsL81DTjxj1YIWj3JYZJcjFllLYKqVdw1kIY3djIuAKctZLgJjsZEzKuowNEDiKhkwNhCaaLUkuE-ErQDSL7yNgSGcoaUWQFnq"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-xs font-headline font-bold truncate mb-1 group-hover:text-primary transition-colors">Coral Reef Restoration</h4>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[92%]"></div>
+</div>
+<p class="text-[10px] text-outline mt-1 font-bold">92% funded</p>
+</div>
+</div>
+<!-- Mini Card 2 -->
+<div class="glass-card p-3 rounded-lg flex gap-4 hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="abstract close up of clean glass laboratory beakers with soft lighting and scientific aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7NJAR7rPFlMZ-F6ur_oyTKjHJsZmhoUkY0-z80B9PnZl9Htpwa2jing9YzQ9YeKKccMeW3nXNxz8kSKXN_20evhIcdabA5OydKHQwplWX0RoQ8vbgs5uc0nmlewHCFl5AquiZvI4GyJOJiI2QvPXxfMkzDYUqYt4zW-pBNzzvlADptRWIPaY8Tv_vWya17zdB9SrlxWgVHMl07NfwXj9xY5D-aI1kVjFDj3PdXCTCKNYG9K5M7lmVzUoN9tRBk4Ewsb0tCao6hlat"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-xs font-headline font-bold truncate mb-1 group-hover:text-primary transition-colors">Rare Disease Research</h4>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[25%]"></div>
+</div>
+<p class="text-[10px] text-outline mt-1 font-bold">25% funded</p>
+</div>
+</div>
+<!-- Mini Card 3 -->
+<div class="glass-card p-3 rounded-lg flex gap-4 hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="w-16 h-16 rounded overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="group of college students studying together in a modern bright lounge with high-tech equipment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZeWOryfiz9xrTyMBSBvEuRneFgQ1tPEoQJ4HXZd8wTyv7ZO9_W6kRNnBlPYvVCzO4A_4IENuZ3ZIVH90ltPqAKHSDPK7qhvbzV3aHC0oi3V9cqFy_N4eD-XhHSuq7XM-Nsqi6nmgl5FfHVR6ijgBD5SFwE8wUtesZvR7xljC1VaAhMEj9e6lXTRb6alIWgPTQl0fkYESidQJcNQx-kFYIIuLUyx9Kchlc5MQYVVSJMCy1wlf7zkUDxCuQyXeGUAQMmD0Wi7mlxzGC"/>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-xs font-headline font-bold truncate mb-1 group-hover:text-primary transition-colors">STEM Scholarships</h4>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full primary-gradient w-[68%]"></div>
+</div>
+<p class="text-[10px] text-outline mt-1 font-bold">68% funded</p>
+</div>
+</div>
+</div>
+<!-- Side Promo -->
+<div class="relative rounded-xl p-6 overflow-hidden bg-surface-container-low border border-primary/10">
+<div class="relative z-10">
+<h3 class="font-headline font-bold text-on-surface mb-2">Celestial Impact Node</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed mb-4">Set up a recurring node to automate your impact across top-performing causes.</p>
+<button class="text-primary text-xs font-bold flex items-center gap-1 hover:translate-x-1 transition-transform">
+                                Initialize Protocol <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-primary/5 blur-2xl"></div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-auto flex flex-col items-center gap-4 py-12 border-t border-[#ecedf6]/5 bg-[#0b0e14]">
+<div class="flex gap-8 text-[#ecedf6]/40 text-xs font-['Manrope']">
+<a class="hover:text-[#b9ffe8] transition-colors" href="#">Privacy</a>
+<a class="hover:text-[#b9ffe8] transition-colors" href="#">Transparency Report</a>
+<a class="hover:text-[#b9ffe8] transition-colors" href="#">Terms</a>
+<a class="hover:text-[#b9ffe8] transition-colors" href="#">Node Status</a>
+</div>
+<p class="text-[#ecedf6]/40 text-xs font-['Manrope']">© 2024 DonerHQ. The Celestial Ledger Protocol.</p>
+</footer>
+</body></html>

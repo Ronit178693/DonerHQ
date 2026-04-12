@@ -32,7 +32,11 @@ const escrowTransactionSchema = new mongoose.Schema({
     videoDeadline: { type: Date },
     
     // The exact date the funds are moved from Escrow to the NGO's account
-    releaseDate: { type: Date }
+    releaseDate: { type: Date },
+
+    // 🛡️ STELLAR IMMUTABLE LEDGER — Blockchain Anchor
+    // Stores the transaction hash from the Stellar network for public auditability
+    stellarTxHash: { type: String }
     
 }, { 
     // Tracking when the escrow contract was created

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | DonerHQ Celestial Ledger</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-error": "#490006",
+                "secondary-fixed": "#45fce6",
+                "primary": "#b9ffe8",
+                "surface": "#0b0e14",
+                "error": "#ff716c",
+                "secondary-container": "#006a60",
+                "on-primary-fixed": "#004436",
+                "error-dim": "#d7383b",
+                "primary-container": "#15ffd1",
+                "surface-bright": "#282c36",
+                "on-secondary": "#005c53",
+                "surface-container-lowest": "#000000",
+                "on-error-container": "#ffa8a3",
+                "secondary-dim": "#2aedd8",
+                "on-secondary-fixed": "#004841",
+                "background": "#0b0e14",
+                "inverse-surface": "#f9f9ff",
+                "tertiary-fixed-dim": "#00bdeb",
+                "secondary": "#45fce6",
+                "secondary-fixed-dim": "#2aedd8",
+                "primary-fixed-dim": "#00e9bf",
+                "primary-fixed": "#00f9cc",
+                "tertiary": "#67d7ff",
+                "on-background": "#ecedf6",
+                "on-surface-variant": "#a9abb3",
+                "surface-variant": "#22262f",
+                "tertiary-fixed": "#00cbfd",
+                "error-container": "#9f0519",
+                "surface-container-high": "#1c2028",
+                "surface-container-highest": "#22262f",
+                "on-primary-fixed-variant": "#006451",
+                "on-tertiary-fixed": "#002733",
+                "outline-variant": "#45484f",
+                "inverse-primary": "#006c57",
+                "surface-dim": "#0b0e14",
+                "surface-container": "#161a21",
+                "tertiary-dim": "#00bdeb",
+                "inverse-on-surface": "#52555c",
+                "surface-container-low": "#10131a",
+                "surface-tint": "#b9ffe8",
+                "tertiary-container": "#00cbfd",
+                "on-secondary-container": "#dcfff8",
+                "on-tertiary": "#00485c",
+                "on-secondary-fixed-variant": "#00675d",
+                "on-primary": "#006653",
+                "primary-dim": "#00e9bf",
+                "on-tertiary-container": "#003e4f",
+                "on-primary-container": "#005d4b",
+                "outline": "#73757d",
+                "on-surface": "#ecedf6",
+                "on-tertiary-fixed-variant": "#00485b"
+              },
+              fontFamily: {
+                "headline": ["Space Grotesk"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        .glass-panel {
+            background: rgba(28, 32, 40, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #b9ffe8 0%, #15ffd1 100%);
+        }
+        .primary-glow {
+            box-shadow: 0 0 20px rgba(185, 255, 232, 0.2);
+        }
+        .accent-bar {
+            box-shadow: -2px 0 0 0 #b9ffe8;
+        }
+        .celestial-bg {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(21, 255, 209, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 189, 235, 0.05) 0%, transparent 40%);
+        }
+      </style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen celestial-bg overflow-hidden">
+<main class="flex min-h-screen w-full max-w-[1280px] mx-auto">
+<!-- LEFT SIDE: Decorative Panel -->
+<section class="hidden lg:flex w-1/2 relative flex-col justify-center px-16">
+<div class="absolute inset-0 z-0 opacity-40">
+<img alt="abstract visualization of global blockchain network with glowing nodes and digital pathways in deep space teal palette" class="w-full h-full object-cover" data-alt="abstract visualization of global blockchain network with glowing nodes and digital pathways in deep space teal palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8AueamxpPRTNlb8mR40WcKidIL8gTmy662nWGD17suK2rXdXMhtp_r8ToZKr6jCxRK3PNcJTXW54l_pFB8z1kj7LmetfEjQvucQaf24AtcPFo6mUMJTq1Fuu7gbyr34eCKc4-75-fQmH06PGeRRjlOmVV-qfJTsi5073P9gZm9q1PdkFeVUXKWZeH89fW6YyY1aEI1pKbDxv14PysXCF0dzIC_j7V8iXi1ohFrNWMk_2RMz8TfSSwC_u0dbBArfkfcZJHTYv80R7M"/>
+</div>
+<div class="relative z-10">
+<div class="mb-4">
+<h1 class="font-headline text-6xl font-bold text-primary tracking-tighter mb-2">DonerHQ</h1>
+<p class="font-headline text-2xl text-on-surface-variant font-light tracking-wide">Transparency Starts Here</p>
+</div>
+<!-- Glassmorphic Stat Card -->
+<div class="mt-12 glass-panel p-8 rounded-xl border-l-4 border-primary/30 max-w-sm transform translate-x-4">
+<div class="flex items-center gap-4 mb-3">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+</div>
+<span class="font-headline text-primary font-bold text-lg tracking-tight uppercase tracking-[0.1em]">Verified Impact</span>
+</div>
+<h3 class="text-3xl font-headline font-bold text-on-surface mb-1">10,000+</h3>
+<p class="text-on-surface-variant font-medium">donors trust our celestial ledger protocol for secure, transparent giving.</p>
+</div>
+</div>
+<!-- Floating Decorative Elements -->
+<div class="absolute bottom-20 left-16 flex gap-8 opacity-60">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-1">Protocol Status</span>
+<span class="text-xs font-mono text-on-surface">NODE_ACTIVE // 0X-CELESTIAL</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-1">Uptime</span>
+<span class="text-xs font-mono text-on-surface">99.999% SYNCED</span>
+</div>
+</div>
+</section>
+<!-- RIGHT SIDE: Login Form -->
+<section class="w-full lg:w-1/2 flex items-center justify-center px-6 md:px-12 py-12">
+<div class="w-full max-w-md">
+<!-- Mobile Logo (Hidden on Desktop) -->
+<div class="lg:hidden mb-12 text-center">
+<h1 class="font-headline text-4xl font-bold text-primary tracking-tighter">DonerHQ</h1>
+</div>
+<div class="glass-panel p-10 rounded-xl shadow-2xl relative">
+<header class="mb-10">
+<h2 class="font-headline text-3xl font-bold text-on-surface mb-2">Welcome Back</h2>
+<p class="text-on-surface-variant font-medium">Access your global impact dashboard</p>
+</header>
+<form class="space-y-6" onsubmit="return false;">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant" for="email">Email Identity</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-none focus:ring-0 text-on-surface px-4 py-4 rounded-lg accent-bar transition-all placeholder:text-outline/40" id="email" placeholder="name@nexus.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant" for="password">Secure Key</label>
+<a class="text-xs font-bold text-primary hover:text-primary-container transition-colors tracking-tight" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none focus:ring-0 text-on-surface px-4 py-4 rounded-lg transition-all placeholder:text-outline/40 pr-12" id="password" placeholder="••••••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Login Button -->
+<div class="pt-4">
+<button class="w-full primary-gradient py-4 rounded-lg font-headline font-bold text-on-primary text-lg primary-glow hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                                Login to Ledger
+                            </button>
+</div>
+</form>
+<!-- Divider -->
+<div class="my-10 flex items-center gap-4">
+<div class="h-[1px] flex-1 bg-gradient-to-r from-transparent to-outline/20"></div>
+<span class="text-[10px] font-bold text-outline/60 tracking-[0.3em] uppercase">OR</span>
+<div class="h-[1px] flex-1 bg-gradient-to-l from-transparent to-outline/20"></div>
+</div>
+<!-- Social Login / Secondary Action -->
+<div class="flex flex-col items-center gap-6">
+<div class="flex gap-4 w-full">
+<button class="flex-1 bg-surface-container-highest/40 hover:bg-surface-container-highest py-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-outline-variant/10">
+<img alt="Google" class="w-5 h-5 opacity-80" data-alt="google icon logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1XefrV_K-gcaYM0G-TpbBg7aolaXkdAGc8ZNW5EY210fk1VuUdhR0GebzxQL3cXmwV_jyXlqd10yJTrSif_UJJybxI5UVGilinnmmB5Rcegg9pLbbl6rfoWoHMZ2vTDzZZyqycUPboTSr0OhU8ArQ4h_2cvhSVycSrVlFWZQmymZvL9GOa2n0Z_aTodWhvV2HLLtOTgLNqF4MLTbrsYTZf5DOPY8vyLvmGZIs_9a6GZ9nt0gttOt94bZKh-DivKWnmCcOgtR_tmld"/>
+<span class="text-sm font-bold text-on-surface-variant">Google</span>
+</button>
+<button class="flex-1 bg-surface-container-highest/40 hover:bg-surface-container-highest py-3 rounded-lg flex items-center justify-center gap-2 transition-colors border border-outline-variant/10">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="wallet">wallet</span>
+<span class="text-sm font-bold text-on-surface-variant">Web3</span>
+</button>
+</div>
+<p class="text-sm text-on-surface-variant font-medium">
+                            New here? 
+                            <a class="text-primary font-bold hover:underline underline-offset-4 ml-1" href="#">Create Account</a>
+</p>
+</div>
+</div>
+<!-- Subtle Trust Metadata -->
+<div class="mt-12 flex justify-center items-center gap-8 opacity-30 grayscale contrast-125">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="encrypted">encrypted</span>
+<span class="text-[10px] font-bold tracking-tighter">AES-256</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="verified_user">verified_user</span>
+<span class="text-[10px] font-bold tracking-tighter">SEC COMPLIANT</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="diamond">diamond</span>
+<span class="text-[10px] font-bold tracking-tighter">ETHEREUM L2</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Content -->
+<footer class="fixed bottom-0 w-full px-12 py-8 flex flex-col md:flex-row justify-between items-center bg-[#0b0e14]/80 backdrop-blur-md border-t border-primary/5 pointer-events-none">
+<div class="text-[10px] font-headline font-bold text-primary/50 tracking-[0.2em] uppercase">
+            © 2024 DonerHQ. Celestial Ledger Protocol.
+        </div>
+<div class="flex gap-8 mt-4 md:mt-0 pointer-events-auto">
+<a class="text-[10px] font-bold text-on-surface-variant hover:text-primary transition-colors tracking-[0.2em] uppercase" href="#">Privacy</a>
+<a class="text-[10px] font-bold text-on-surface-variant hover:text-primary transition-colors tracking-[0.2em] uppercase" href="#">Security</a>
+<a class="text-[10px] font-bold text-on-surface-variant hover:text-primary transition-colors tracking-[0.2em] uppercase" href="#">Impact Report</a>
+</div>
+</footer>
+</body></html>

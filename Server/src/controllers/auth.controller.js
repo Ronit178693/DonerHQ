@@ -6,6 +6,10 @@ import NGO from '../models/NGO.js';
 import jwt from 'jsonwebtoken';
 // Importing crypto for secure random number generation during password resets
 import crypto from 'crypto';
+// Importing the Cloudinary upload utility for NGO registration file handling
+import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import sendEmail from '../utils/sendEmail.js';
+
 
 // Reusable function to create a JWT and set it as an httpOnly session cookie
 const generateTokenAndSetCookie = (res, user) => {
@@ -36,6 +40,30 @@ const generateTokenAndSetCookie = (res, user) => {
 // Closing the helper function
 };
 
+// Unified registration entry point that dispatches to specific role handlers
+export const register = async (req, res) => {
+    const { role } = req.body;
+    
+    // Defaulting to donor if no role is explicitly provided
+    if (!role || role === 'donor') {
+        // Enforcing default interests if the frontend didn't provide any yet
+        if (!req.body.interests) {
+            req.body.interests = [INTEREST_CATEGORIES[0]]; // Default to first category
+        }
+        return registerDonor(req, res);
+    }
+    
+    if (role === 'ngo') {
+        // Providing fallback defaults for mandatory NGO fields to prevent initial setup failure
+        if (!req.body.bio || req.body.bio === '') req.body.bio = 'New organization on DonerHQ.';
+        if (!req.body.location || req.body.location === '') req.body.location = 'India';
+        if (!req.body.category || req.body.category === '') req.body.category = 'Sustainability';
+        return registerNGO(req, res);
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid role provided' });
+};
+
 // End-point to register a new donor account with an interest-based onboarding quiz
 export const registerDonor = async (req, res) => {
     // Destructuring all essential donor registration fields from the request body
@@ -49,19 +77,24 @@ export const registerDonor = async (req, res) => {
         // Closing the guard clause
         }
 
+        // Ensuring interests is an array (even if a single string is provided by multipart/form-data)
+        let normalizedInterests = interests;
+        if (interests && typeof interests === 'string') {
+            try {
+                normalizedInterests = JSON.parse(interests);
+            } catch (e) {
+                normalizedInterests = [interests];
+            }
+        }
+
         // Ensuring the donor has participated in the interest selection component
-        if (!interests || !Array.isArray(interests) || interests.length === 0) {
+        if (!normalizedInterests || !Array.isArray(normalizedInterests) || normalizedInterests.length === 0) {
             // Returning an error prompting the user to select at least one interest category
             return res.status(400).json({
-                // Flagging failure
                 success: false,
-                // Asking for input
                 message: 'Please select at least one interest category',
-                // Providing the list of valid categories for UI selection
                 categories: INTEREST_CATEGORIES
-            // Closing the JSON object
             });
-        // Closing the interests validation block
         }
 
         // Filtering user inputs to ensure only valid interest categories are saved
@@ -101,11 +134,23 @@ export const registerDonor = async (req, res) => {
             // Assigning the default donor role for social accounts
             role: 'donor',
             // Storing the filtered interest categories for the feed algorithm
-            interests,
+            interests: normalizedInterests,
             // Marking the onboarding journey as successfully completed
             onboardingComplete: true
-        // Closing the create parameters
         });
+        
+        // 📧 WELCOME EMAIL: Notifying the user of their successful entry into the ledger
+        const welcomeHtml = `
+            <div style="font-family: sans-serif; background: #0a0a0a; color: #fff; padding: 40px; border-radius: 16px;">
+                <h1 style="color: #b9ffe8; font-size: 24px;">Welcome to the Impact Ledger, ${name}!</h1>
+                <p>Your donor node has been successfully initialized on <b>DonerHQ</b>.</p>
+                <p>We've calibrated your feed based on your interests: <b>${normalizedInterests.join(', ')}</b>.</p>
+                <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                    <p style="font-size: 12px; color: #666;">This is an automated protocol message. Verify your transactions on-chain.</p>
+                </div>
+            </div>
+        `;
+        sendEmail(email, 'Identity Committed to Ledger — Welcome to DonerHQ', welcomeHtml);
 
         // Generating a secure JWT and attaching it to the current response session
         generateTokenAndSetCookie(res, newUser);
@@ -361,7 +406,7 @@ export const passwordResetOTP = async (req, res) => {
 
         // Generating a secure 6-digit random code for the reset process
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // Encrypting the OTP before saving it to the database to prevent direct leaks
+        // Encrypting the OTP before saving it to the database (stored as string)
         const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
         
         // Setting an expiration for the code (10 minutes from now)
@@ -509,4 +554,21 @@ export const getPendingNGOs = async (req, res) => {
     // Closing the try-catch block
     }
 // Closing the getPendingNGOs controller
+};
+
+// End-point for admins to retrieve the entire user-base for moderation and oversight
+export const getAllUsers = async (req, res) => {
+    // Starting the mission-critical search for all registered identities
+    try {
+        // Querying every account from the core user ledger
+        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        // Returning the full list of agents currently in the ecosystem
+        return res.status(200).json({ success: true, count: users.length, users });
+    // Catching any processing timeouts or database malfunctions
+    } catch (error) {
+        // Returning a 500 status message for service failures
+        return res.status(500).json({ success: false, message: error.message });
+    // Closing the try-catch block
+    }
+// Closing the getAllUsers controller
 };

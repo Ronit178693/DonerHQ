@@ -1,0 +1,395 @@
+.admin-panel-view {
+  padding: 2rem;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.admin-header {
+  margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.5rem;
+  border-radius: 1rem;
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.admin-nav-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-outline);
+  font-family: var(--font-headline);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-nav-btn.active {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 4px 15px rgba(185, 255, 232, 0.2);
+}
+
+/* Stats Grid */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.admin-stat-card {
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-stat-icon {
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+}
+
+.admin-stat-val {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.admin-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-outline);
+}
+
+/* Main Content Area */
+.admin-tab-pane {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* NGO List */
+.ngo-verify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ngo-verify-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2rem;
+  padding: 1.5rem;
+  align-items: center;
+}
+
+.ngo-verify-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ngo-verify-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ngo-verify-docs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.doc-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  background: rgba(185, 255, 232, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  border: 1px solid rgba(185, 255, 232, 0.2);
+  transition: all 0.2s;
+}
+
+.doc-link:hover {
+  background: rgba(185, 255, 232, 0.2);
+}
+
+.ngo-action-btns {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-approve {
+  background: var(--color-primary);
+  color: black;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-reject {
+  background: rgba(255, 113, 108, 0.1);
+  color: #ff716c;
+  border: 1px solid rgba(255, 113, 108, 0.2);
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Escrow Table */
+.escrow-table-container {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 1rem;
+  color: var(--color-outline);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-table tr {
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s;
+}
+
+.admin-table tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-table td {
+  padding: 1.25rem 1rem;
+}
+
+.admin-table tr:first-child td { border-top: none; }
+.admin-table td:first-child { border-radius: 0.75rem 0 0 0.75rem; }
+.admin-table td:last-child { border-radius: 0 0.75rem 0.75rem 0; }
+
+.status-chip {
+  padding: 0.35rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-chip.holding { background: rgba(255, 215, 0, 0.1); color: #ffd700; }
+.status-chip.released { background: rgba(185, 255, 232, 0.1); color: var(--color-primary); }
+.status-chip.disputed { background: rgba(255, 140, 0, 0.1); color: #ff8c00; }
+.status-chip.refunded { background: rgba(255, 113, 108, 0.1); color: #ff716c; }
+
+.escrow-btn {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--color-outline);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.escrow-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.escrow-btn.release:hover { color: var(--color-primary); border-color: var(--color-primary); }
+.escrow-btn.freeze:hover { color: #ff8c00; border-color: #ff8c00; }
+.escrow-btn.revert:hover { color: #ff716c; border-color: #ff716c; }
+
+/* Empty state */
+.admin-empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 1.5rem;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.admin-empty span {
+  font-size: 3.5rem;
+  opacity: 0.15;
+  margin-bottom: 1.5rem;
+}
+/* Admin Modal System */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.admin-modal {
+  width: 100%;
+  max-width: 1000px;
+  max-height: 90vh;
+  border-radius: 2rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+  border: 1px solid rgba(185, 255, 232, 0.1);
+}
+
+.admin-modal-header {
+  padding: 1.5rem 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-modal-header h3 {
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--color-outline);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-modal-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  overflow: hidden;
+}
+
+.video-vault-container {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 500px;
+}
+
+.vault-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.vault-info {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.01);
+}
+
+.vault-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.vault-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 900px) {
+  .admin-modal-body {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .video-vault-container {
+    height: 300px;
+  }
+}
+
+/* ── Admin Blockchain Integrity Styles ── */
+.admin-stellar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  opacity: 0.6;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.admin-stellar-link:hover {
+  opacity: 1;
+}
+
+.admin-vault-stellar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: rgba(185, 255, 232, 0.08);
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  border: 1px solid rgba(185, 255, 232, 0.15);
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.admin-vault-stellar:hover {
+  background: rgba(185, 255, 232, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(185, 255, 232, 0.1);
+}
+
+.admin-vault-stellar .material-symbols-outlined {
+  font-size: 1.125rem;
+}

@@ -1,0 +1,162 @@
+/* ═══════════════════════════════════════════════════════════════
+   Dashboard Styles (Donor & NGO Control Center)
+   ═══════════════════════════════════════════════════════════════ */
+
+.dashboard-page {
+  padding-top: var(--space-20);
+  background: var(--color-background);
+  min-height: 100vh;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  padding: 4rem 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+@media (min-width: 1024px) {
+  .dashboard-layout { grid-template-columns: repeat(12, 1fr); }
+}
+
+/* Dashboard Header Items */
+.dash-header {
+  grid-column: span 12;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+}
+
+.dash-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.dash-avatar-lg {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1.5rem;
+  background: var(--color-surface-container-high);
+  border: 4px solid var(--color-surface-container-high);
+}
+
+.dash-welcome h1 {
+  font-family: var(--font-headline);
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+/* Stats Cards Section */
+.dash-stats-row {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+@media (min-width: 768px) {
+  .dash-stats-row { grid-template-columns: repeat(4, 1fr); }
+}
+
+.dash-stat-card {
+  background: var(--color-surface-container);
+  padding: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-icon-wrapper {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: rgba(185, 255, 232, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+}
+
+.dash-stat-val {
+  font-family: var(--font-headline);
+  font-size: 1.875rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.dash-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Main Content Area */
+.dash-main-col {
+  grid-column: span 12;
+}
+@media (min-width: 1024px) {
+  .dash-main-col { grid-column: span 8; }
+}
+
+.dash-side-col {
+  grid-column: span 12;
+}
+@media (min-width: 1024px) {
+  .dash-side-col { grid-column: span 4; }
+}
+
+.section-card {
+  background: var(--color-surface-container-low);
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 2.5rem;
+  height: 100%;
+}
+
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.03);
+  padding-bottom: 1rem;
+}
+.section-title-row h2 {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Table in Section */
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dash-thead th {
+  text-align: left;
+  padding: 1rem 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--color-outline);
+}
+
+.dash-tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.dash-tr td {
+  padding: 1.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
