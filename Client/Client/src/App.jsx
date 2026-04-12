@@ -5,6 +5,9 @@ import useAuthStore from './stores/authStore';
 /* Layout */
 import Layout from './components/layout/Layout';
 
+/* Guards */
+import ProtectedRoute from './components/guards/ProtectedRoute';
+
 /* Pages */
 import Landing from './pages/Landing/Landing';
 import Login from './pages/Auth/Login';
@@ -17,9 +20,9 @@ import SocialFeed from './pages/Feed/SocialFeed';
 import DonorDashboard from './pages/Dashboard/DonorDashboard';
 import NgoDashboard from './pages/Dashboard/NgoDashboard';
 import Leaderboard from './pages/Leaderboard/Leaderboard';
-import EscrowLedger from './pages/Escrow/EscrowLedger';
 import TeamDashboard from './pages/Team/TeamDashboard';
 import AdminPanel from './pages/Admin/AdminPanel';
+import NotFound from './pages/NotFound/NotFound';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -35,8 +38,8 @@ export default function App() {
       <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         {/* Specialized standalone routes — own navbar, no shared layout */}
-        <Route path="/ngo/dashboard" element={<NgoDashboard />} />
-        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/ngo/dashboard" element={<ProtectedRoute roles={['ngo']}><NgoDashboard /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminPanel /></ProtectedRoute>} />
 
         {/* Platform & Public Pages — use shared Navbar + Footer layout */}
         <Route element={<Layout />}>
@@ -49,14 +52,16 @@ export default function App() {
           <Route path="/ngos" element={<DiscoverNgos />} />
           <Route path="/ngos/:id" element={<NgoProfile />} />
           
-          {/* Platform */}
-          <Route path="/feed" element={<SocialFeed />} />
+          {/* Protected Platform Pages */}
+          <Route path="/feed" element={<ProtectedRoute><SocialFeed /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/escrow" element={<EscrowLedger />} />
-          <Route path="/donor/dashboard" element={<DonorDashboard />} />
+          <Route path="/donor/dashboard" element={<ProtectedRoute roles={['donor']}><DonorDashboard /></ProtectedRoute>} />
 
           {/* Team */}
-          <Route path="/teams/:id" element={<TeamDashboard />} />
+          <Route path="/teams/:id" element={<ProtectedRoute><TeamDashboard /></ProtectedRoute>} />
+
+          {/* 404 Catch-All */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </BrowserRouter>

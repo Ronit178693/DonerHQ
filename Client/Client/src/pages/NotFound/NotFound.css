@@ -1,0 +1,112 @@
+.notfound-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.notfound-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(185, 255, 232, 0.06) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: notfound-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes notfound-pulse {
+  0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.9); }
+  100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.notfound-content {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+}
+
+.notfound-icon {
+  font-size: 4rem;
+  color: var(--color-outline);
+  opacity: 0.25;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.notfound-code {
+  font-size: 7rem;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--color-primary) 0%, rgba(185, 255, 232, 0.3) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.notfound-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  margin-bottom: 1rem;
+}
+
+.notfound-desc {
+  font-size: 0.95rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.notfound-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.notfound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.notfound-btn .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.notfound-btn--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 4px 20px rgba(185, 255, 232, 0.15);
+}
+
+.notfound-btn--primary:hover {
+  box-shadow: 0 6px 30px rgba(185, 255, 232, 0.25);
+  transform: translateY(-1px);
+}
+
+.notfound-btn--ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-on-surface-variant);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.notfound-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-on-surface);
+}

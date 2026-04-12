@@ -39,6 +39,9 @@ const causeSchema = new mongoose.Schema({
     // Unique donor count supporting this specific mission
     donorCount: { type: Number, default: 0 },
     
+    // Categorization for filtering and AI recommendations (matches NGO/User interest categories)
+    category: { type: String },
+    
     // Main thumbnail for the home feed and search results (hosted on Cloudinary)
     coverImage: { type: String } 
     

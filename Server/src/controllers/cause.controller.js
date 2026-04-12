@@ -62,7 +62,9 @@ export const createCause = async (req, res) => {
             // Assigning the optional deadline date if provided or null for open-ended missions
             deadline: deadline || null,
             // Storing the cover image URL hosted on Cloudinary or setting an empty string
-            coverImage: coverImageUrl || ''
+            coverImage: coverImageUrl || '',
+            // Auto-inheriting the category from the parent NGO for discovery and recommendations
+            category: req.body.category || ngo.category || ''
         });
 
         // Atomically updating the NGO's document to push the new cause's ID
@@ -94,7 +96,10 @@ export const getCauses = async (req, res) => {
         // If a status filter is provided (e.g., active, finished), apply it to the query
         if (status) query.status = status;
         // If a search keyword is provided, perform a case-insensitive regex search on the cause title
-        if (search) query.title = { $regex: search, $options: 'i' };
+        if (search) {
+            const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            query.title = { $regex: escaped, $options: 'i' };
+        }
 
         // Finding causes that match all provided query parameters
         const causes = await Cause.find(query)

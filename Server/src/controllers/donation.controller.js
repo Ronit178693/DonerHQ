@@ -8,6 +8,7 @@ import razorpay from '../config/razorpay.js';
 import crypto from 'crypto';
 import { getIO } from '../socket.js';
 import sendEmail from '../utils/sendEmail.js';
+import { anchorToStellar } from '../services/stellar.service.js';
 
 
 /**
@@ -131,10 +132,10 @@ export const verifyPayment = async (req, res) => {
             $inc: { leaderboardScore: 10 }
         });
 
-        // 1. Updating the Cause's financial state
+        // 1. Updating the Cause's financial state (populate ngoId for frontend badge)
         const updatedCause = await Cause.findByIdAndUpdate(causeId, { 
             $inc: { raisedAmount: Number(amount), donorCount: 1 } 
-        }, { new: true });
+        }, { new: true }).populate('ngoId', 'name logo verified transparencyScore');
 
         // 2. Updating the NGO's total fundraising reach
         await NGO.findByIdAndUpdate(cause.ngoId, { 
@@ -143,17 +144,25 @@ export const verifyPayment = async (req, res) => {
 
         // 3. 🛡️ UPDATING ESCROW LEDGER — Ensure transparency tracking
         // We initialize or update the escrow holding for this specific cause
-        await EscrowTransaction.findOneAndUpdate(
+        const escrow = await EscrowTransaction.findOneAndUpdate(
             { causeId: cause._id },
             { 
                 $inc: { totalHeld: Number(amount) },
                 $set: { 
                     ngoId: cause.ngoId,
-                    status: 'holding' // Reset to holding if it was empty/new
+                    status: 'holding' 
                 }
             },
             { upsert: true, new: true }
         );
+
+        // 4. 🛰️ BLOCKCHAIN ANCHOR — Creating immutable proof on Stellar
+        // We anchor the "Locked" status onto the ledger
+        const stellarHash = await anchorToStellar(escrow._id.toString(), 'holding', escrow.totalHeld);
+        if (stellarHash) {
+            escrow.stellarTxHash = stellarHash;
+            await escrow.save();
+        }
 
         // Returning the success response including the verified donation record
         res.status(200).json({ 
