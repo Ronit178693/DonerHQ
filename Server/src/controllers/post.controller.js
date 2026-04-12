@@ -109,8 +109,8 @@ export const getFeedPosts = async (req, res) => {
             $or: [
                 // Path 1: Content from organizations the user explicitly follows
                 { ngoId: { $in: user.following } },
-                // Path 2: Content matching the user's selected interest keywords
-                { tags: { $in: user.interestTags || [] } }
+                // Path 2: Content matching the user's selected interest categories
+                { tags: { $in: [...(user.interests || []), ...(user.interestTags || [])] } }
             ]
         })
         // Ordering results by creation date so the freshest content appears first
@@ -129,7 +129,7 @@ export const getFeedPosts = async (req, res) => {
             // Re-matching the same follow/interest filter criteria
             $or: [
                 { ngoId: { $in: user.following } },
-                { tags: { $in: user.interestTags || [] } }
+                { tags: { $in: [...(user.interests || []), ...(user.interestTags || [])] } }
             ]
         });
 

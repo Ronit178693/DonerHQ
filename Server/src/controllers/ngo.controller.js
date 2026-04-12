@@ -143,14 +143,15 @@ export const discoverNGOs = async (req, res) => {
         // Closing the location check
         }
 
-        // Adding a text search filter for NGO name or bio
+        // Adding a text search filter for NGO name or bio (escape regex chars to prevent ReDoS)
         if (search) {
+            const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             // Using an OR condition
             filter.$or = [
                 // Match name
-                { name: { $regex: search, $options: 'i' } },
+                { name: { $regex: escaped, $options: 'i' } },
                 // Match bio
-                { bio: { $regex: search, $options: 'i' } }
+                { bio: { $regex: escaped, $options: 'i' } }
             ];
         // Closing the search check
         }
@@ -433,7 +434,7 @@ export const getNGODashboard = async (req, res) => {
                     totalLikes: { $sum: '$likes' },
                     totalShares: { $sum: '$shares' },
                     totalDonateClicks: { $sum: '$donateClicks' },
-                    totalComments: { $sum: { $size: '$comments' } },
+                    totalComments: { $sum: { $size: { $ifNull: ['$comments', []] } } },
                     count: { $sum: 1 }
                 }
             }

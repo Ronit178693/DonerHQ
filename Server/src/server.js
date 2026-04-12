@@ -1,3 +1,4 @@
+// DonerHQ Live Server - Last Restart Triggered: 2026-04-12
 // Importing dotenv to load environment variables from the .env file
 import 'dotenv/config';
 // Importing express to set up our application's backend server
@@ -122,18 +123,19 @@ app.get('/', (req, res) => {
     res.json({ message: 'DonerHQ Server is running (ES Modules) 🚀' });
 });
 
-// Defining a fallback middleware for any routes that were not handled above
-app.use((req, res) => {
-    // Returning a 404 Route Not Found error as JSON
-    res.status(404).json({ success: false, message: 'Route not found' });
-});
-
 // Implementing a global error handling middleware to catch all failures
+// This MUST have 4 parameters to be recognized as error middleware by Express
 app.use((err, req, res, next) => {
     // Logging the error stack trace to the console for easier debugging
     console.error(err.stack);
     // Returning a generic 500 error response to the client
     res.status(500).json({ success: false, message: 'Internal server error' });
+});
+
+// Defining a fallback middleware for any routes that were not handled above
+app.use((req, res) => {
+    // Returning a 404 Route Not Found error as JSON
+    res.status(404).json({ success: false, message: 'Route not found' });
 });
 
 // Defining the port for the server to listen on from environment variables

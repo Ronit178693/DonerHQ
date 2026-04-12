@@ -11,13 +11,7 @@ export default function Navbar() {
   const dropdownRef = useRef(null);
   const location = useLocation();
 
-  // Hide global navbar on NGO/Admin views (they have their own nav)
-  const hideNavbar = location.pathname.startsWith('/ngo/dashboard') ||
-                     location.pathname.startsWith('/admin');
-  
-  if (hideNavbar) return null;
-
-  // Track scroll for glass effect intensity
+  // Track scroll for glass effect intensity — MUST be above any conditional returns
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -37,6 +31,13 @@ export default function Navbar() {
 
   // Close dropdown on route change
   useEffect(() => { setDiscoverOpen(false); }, [location.pathname]);
+
+  // Hide global navbar on NGO/Admin views (they have their own nav)
+  // This check MUST come AFTER all hooks to respect Rules of Hooks
+  const hideNavbar = location.pathname.startsWith('/ngo/dashboard') ||
+                     location.pathname.startsWith('/admin');
+  
+  if (hideNavbar) return null;
 
   return (
     <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
@@ -115,9 +116,9 @@ export default function Navbar() {
                       </Link>
                       
                       <div className="nav-dropdown__footer">
-                        <Link to="/escrow" className="dropdown-footer-link">
-                          <span className="material-symbols-outlined">account_balance</span>
-                          View Escrow Ledger
+                        <Link to="/donor/dashboard" className="dropdown-footer-link" onClick={() => setDiscoverOpen(false)}>
+                          <span className="material-symbols-outlined">account_balance_wallet</span>
+                          Track My Impact
                         </Link>
                       </div>
                     </motion.div>

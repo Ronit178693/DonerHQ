@@ -5,6 +5,7 @@ import Donation from '../models/Donation.js';
 import EscrowTransaction from '../models/EscrowTransaction.js';
 import ImpactVideo from '../models/ImpactVideo.js';
 import sendEmail from '../utils/sendEmail.js';
+import { anchorToStellar } from '../services/stellar.service.js';
 
 
 /**
@@ -142,6 +143,16 @@ export const manageEscrow = async (req, res) => {
         }
 
         await escrow.save();
+
+        // 🛰️ BLOCKCHAIN ANCHOR — Update status on Stellar for finality
+        if (action === 'release' || action === 'freeze' || action === 'revert') {
+           const stellarHash = await anchorToStellar(escrow._id.toString(), action, escrow.totalHeld);
+           if (stellarHash) {
+              escrow.stellarTxHash = stellarHash;
+              await escrow.save();
+           }
+        }
+
         res.status(200).json({ success: true, message: `Escrow ${action}ed successfully`, escrow });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Escrow management error', error: error.message });

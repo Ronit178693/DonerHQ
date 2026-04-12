@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import API from '../../api/axios';
 import useAuthStore from '../../stores/authStore';
 import './CauseDetail.css';
@@ -7,6 +8,7 @@ import './CauseDetail.css';
 export default function CauseDetail() {
   const { id } = useParams();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [cause, setCause] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedAmount, setSelectedAmount] = useState(1000);
@@ -16,9 +18,16 @@ export default function CauseDetail() {
   const isGoalReached = cause ? cause.raisedAmount >= cause.goalAmount : false;
 
   const handleDonate = async () => {
+    // Auth guard — redirect guests to login
+    if (!user) {
+      toast.error('Please log in to deploy capital.');
+      navigate('/login');
+      return;
+    }
+
     const amount = selectedAmount || Number(customAmount);
     if (!amount || amount <= 0) {
-      alert("Please select or enter a valid donation amount.");
+      toast.error('Please select or enter a valid donation amount.');
       return;
     }
 
@@ -55,15 +64,15 @@ export default function CauseDetail() {
             });
 
             if (verifyRes.data.success) {
-              alert("Donation successful! Your contribution is now secured in Escrow.");
+              toast.success('Donation successful! Your contribution is now secured in Escrow.');
               // Update local cause state to reflect new raised amount and donor count
               setCause(verifyRes.data.updatedCause);
             } else {
-              alert("Payment verification failed: " + verifyRes.data.message);
+              toast.error('Payment verification failed: ' + verifyRes.data.message);
             }
           } catch (err) {
-            console.error("Verification error:", err);
-            alert("An error occurred during payment verification.");
+            console.error('Verification error:', err);
+            toast.error('An error occurred during payment verification.');
           }
         },
         prefill: {
@@ -84,8 +93,8 @@ export default function CauseDetail() {
       rzp.open();
 
     } catch (err) {
-      console.error("Payment initialization error:", err);
-      alert("Could not initialize payment. Please try again.");
+      console.error('Payment initialization error:', err);
+      toast.error('Could not initialize payment. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -267,7 +276,9 @@ export default function CauseDetail() {
                     <span className="material-symbols-outlined text-primary symbol-fill" style={{ fontSize: '1.25rem' }}>shield</span>
                     <span className="label-xs font-bold font-headline" style={{ fontSize: '0.625rem', textTransform: 'uppercase' }}>Escrow Holding Status</span>
                   </div>
-                  <span className="label-xs font-black" style={{ color: 'var(--color-primary)', background: 'rgba(185,255,232,0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>VERIFIED</span>
+                  <span className="label-xs font-black" style={{ color: 'var(--color-primary)', background: 'rgba(185,255,232,0.1)', padding: '0.25rem 0.5rem', borderRadius: '4px' }}>
+                    {cause.escrowStatus === 'released' ? 'RELEASED' : cause.escrowStatus === 'video_uploaded' ? 'PROOF SUBMITTED' : cause.escrowStatus === 'disputed' ? 'AUDIT' : 'SECURED'}
+                  </span>
                </div>
                <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--color-on-surface-variant)', marginTop: '1.5rem', fontStyle: 'italic' }}>
                   "Precision impact security: Funds are only disbursed upon verifiable ground-level task completion."
@@ -279,7 +290,7 @@ export default function CauseDetail() {
              <div className="glass-panel" style={{ padding: '1rem 1.5rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <span className="material-symbols-outlined text-outline" style={{ fontSize: '1.25rem' }}>encrypted</span>
                 <span style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1rem', color: 'var(--color-outline)' }}>
-                   Smart Node ID: <span style={{ color: 'var(--color-on-surface-variant)' }}>0x82f...a12b</span>
+                   Smart Node ID: <span style={{ color: 'var(--color-on-surface-variant)' }}>{cause._id ? `0x${cause._id.slice(0, 6)}...${cause._id.slice(-4)}` : '—'}</span>
                 </span>
              </div>
           </div>

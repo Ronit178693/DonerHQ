@@ -195,6 +195,7 @@ function PostsTab({ ngo }) {
   };
 
   const handleDelete = async (postId) => {
+    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) return;
     setDeleting(postId);
     try {
       await API.delete(`/ngos/posts/${postId}`);
@@ -329,8 +330,8 @@ function ImpactProofUpload({ causeId, impactVideoUrl, escrowStatus, onComplete, 
   const [preview, setPreview] = useState(null);
 
   const isGoalMet = raisedAmount >= goalAmount;
-  const isDeadlinePassed = deadline && new Date() > new Date(deadline);
-  const canUpload = isGoalMet && !isDeadlinePassed;
+  // NGOs can upload proof once the goal is met (deadline applies only to fundraising, not proof submission)
+  const canUpload = isGoalMet;
 
   const handleUpload = async () => {
     if (!file) return;
@@ -384,7 +385,7 @@ function ImpactProofUpload({ causeId, impactVideoUrl, escrowStatus, onComplete, 
             <div>
                <p className="font-bold body-sm" style={{margin: 0}}>Upload Locked</p>
                <p className="body-xs" style={{opacity: 0.7}}>
-                  {!isGoalMet ? `Goal not reached (₹${(raisedAmount || 0).toLocaleString()} / ₹${(goalAmount || 0).toLocaleString()})` : `Deadline expired (${new Date(deadline).toLocaleDateString()})`}
+                  Goal not yet reached (₹{(raisedAmount || 0).toLocaleString()} / ₹{(goalAmount || 0).toLocaleString()})
                </p>
             </div>
          </div>

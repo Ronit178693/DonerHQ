@@ -35,7 +35,7 @@ export const anchorToStellar = async (internalId, status, amount) => {
             asset: Asset.native(),
             amount: "0.00001", 
         }))
-        .addMemo(TransactionBuilder.Memo.text(memoText))
+        .addMemo(StellarSdk.Memo.text(memoText))
         .setTimeout(30)
         .build();
 

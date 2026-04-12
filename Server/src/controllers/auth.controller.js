@@ -30,7 +30,7 @@ const generateTokenAndSetCookie = (res, user) => {
         // Enforcing secure HTTPS transport for the cookie specifically in production environments
         secure: process.env.NODE_ENV === 'production',
         // Configuring the SameSite policy for protection against CSRF attacks
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         // Setting the maximum age of the cookie to 7 days to match the token period
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
     });
@@ -98,7 +98,7 @@ export const registerDonor = async (req, res) => {
         }
 
         // Filtering user inputs to ensure only valid interest categories are saved
-        const invalidInterests = interests.filter(i => !INTEREST_CATEGORIES.includes(i));
+        const invalidInterests = normalizedInterests.filter(i => !INTEREST_CATEGORIES.includes(i));
         // Branching logic to handle disallowed category inputs
         if (invalidInterests.length > 0) {
             // Returning an error listing which specific categories failed validation
@@ -358,7 +358,7 @@ export const logout = async (req, res) => {
         // Transport flag
         secure: process.env.NODE_ENV === 'production',
         // Cross-site flag
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     // Closing the cookie parameters
     });
     // Acknowledging the successful termination of the session
