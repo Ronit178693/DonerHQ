@@ -132,11 +132,9 @@ const ngoSchema = new mongoose.Schema({
 });
 
 // Middleware function to synchronize the verified flag with the status
-ngoSchema.pre('save', function (next) {
+ngoSchema.pre('save', function () {
     // Setting verified to true only if the status is 'approved'
     this.verified = this.status === 'approved';
-    // Passing control to the next middleware or save operation
-    next();
 });
 
 // Creating an index on the category field for faster searching

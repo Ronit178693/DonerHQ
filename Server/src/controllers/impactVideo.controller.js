@@ -8,6 +8,7 @@ import EscrowTransaction from '../models/EscrowTransaction.js';
 import Donation from '../models/Donation.js';
 // Importing the Cloudinary upload utility to handle asset hosting
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { anchorToStellar } from '../services/stellar.service.js';
 
 /**
  * Impact Video Controller
@@ -50,6 +51,16 @@ export const uploadImpactVideo = async (req, res) => {
         // Guard clause if no mission matches the provided ID
         if (!cause) return res.status(404).json({ success: false, message: 'Cause not found' });
 
+        // SECURITY CHECK: Ensure goal is completed
+        if (cause.raisedAmount < cause.goalAmount) {
+            return res.status(403).json({ success: false, message: 'Goal not met. Funds must be fully raised before impact proof can be committed.' });
+        }
+
+        // SECURITY CHECK: Ensure deadline has not passed (if exists)
+        if (cause.deadline && new Date() > new Date(cause.deadline)) {
+            return res.status(403).json({ success: false, message: 'Deadline expired. Failure to upload proof before deadline requires manual Admin intervention.' });
+        }
+
         // Creating the new ImpactVideo record in the database
         const newVideo = await ImpactVideo.create({
             // Linking to the mission
@@ -69,7 +80,14 @@ export const uploadImpactVideo = async (req, res) => {
         });
 
         // Updating the linked Escrow record to notify admins that proof is ready for review
-        await EscrowTransaction.findOneAndUpdate({ causeId }, { status: 'video_uploaded' });
+        const escrow = await EscrowTransaction.findOneAndUpdate({ causeId }, { status: 'video_uploaded' }, { new: true });
+
+        // 🛡️ EVIDENCE ANCHOR: Record the submission of proof on the blockchain
+        const txHash = await anchorToStellar(escrow._id.toString(), 'evidence_uploaded', cause.raisedAmount);
+        if (txHash) {
+            escrow.stellarTxHash = txHash;
+            await escrow.save();
+        }
 
         // Returning the successfully created video document and a positive status code
         return res.status(201).json({ success: true, message: 'Impact video uploaded successfully', impactVideo: newVideo });
@@ -153,12 +171,26 @@ export const approveImpactVideo = async (req, res) => {
             // If approved, move the mission state to 'admin_review' for final fund disbursement
             await Cause.findByIdAndUpdate(video.causeId, { escrowStatus: 'admin_review' }); 
             // Updating the escrow contract state to prepare for release
-            await EscrowTransaction.findOneAndUpdate({ causeId: video.causeId }, { status: 'admin_review' });
+            const escrow = await EscrowTransaction.findOneAndUpdate({ causeId: video.causeId }, { status: 'admin_review' }, { new: true });
+
+            // 🛡️ REVIEW ANCHOR: Record the admin approval on the blockchain
+            const txHash = await anchorToStellar(escrow._id.toString(), 'approved', escrow.totalHeld);
+            if (txHash) {
+                escrow.stellarTxHash = txHash;
+                await escrow.save();
+            }
         } else {
             // If rejected, reset the mission state to 'holding' as more proof is needed
             await Cause.findByIdAndUpdate(video.causeId, { escrowStatus: 'holding' });
             // Updating the escrow contract to mark it as 'disputed' / needing attention
-            await EscrowTransaction.findOneAndUpdate({ causeId: video.causeId }, { status: 'disputed' });
+            const escrow = await EscrowTransaction.findOneAndUpdate({ causeId: video.causeId }, { status: 'disputed' }, { new: true });
+
+            // 🛡️ DISPUTE ANCHOR: Record the audit dispute on the blockchain
+            const txHash = await anchorToStellar(escrow._id.toString(), 'disputed', escrow.totalHeld);
+            if (txHash) {
+                escrow.stellarTxHash = txHash;
+                await escrow.save();
+            }
         }
 
         // Returning a success message confirming the resolution to the admin

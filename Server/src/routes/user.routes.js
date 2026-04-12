@@ -11,7 +11,8 @@ import {
     unsaveNGO,
     getWishlist,
     getLeaderboard,
-    getRecommendedCauses
+    getRecommendedCauses,
+    getMyInfo
 } from '../controllers/user.controller.js';
 // Importing the protect middleware to ensure only logged-in users access routes
 import { protect } from '../middlewares/auth.middleware.js';
@@ -31,6 +32,9 @@ router.get('/profile/:id', getUserProfile);
 
 // Apply the protect middleware to all routes defined below this line
 router.use(protect);
+
+// End-point to get current user info (ME)
+router.get('/me', getMyInfo);
 
 // End-point to update the current logged-in user's profile details
 router.put('/profile', updateUserProfile);

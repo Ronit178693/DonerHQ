@@ -343,36 +343,30 @@ export const followNGO = async (req, res) => {
         if (!ngoExists) {
             // Return 404
             return res.status(404).json({ success: false, message: 'NGO not found' });
-        // Closing the guard clause
+        }
+
+        // Check if already following
+        const user = await User.findById(req.user._id);
+        if (user.following.map(f => f.toString()).includes(id)) {
+            return res.status(400).json({ success: false, message: 'Already following this NGO' });
         }
 
         // Atomic update user following
-        const updatedUser = await User.findByIdAndUpdate(
+        await User.findByIdAndUpdate(
             req.user._id,
-            { $addToSet: { following: id } },
-            { new: true }
+            { $addToSet: { following: id } }
         );
 
-        // Re-fetch user
-        const user = await User.findById(req.user._id);
-        // Successful follow check
-        if (user.following.includes(id)) {
-             // Atomic increment NGO followers
-             await NGO.findByIdAndUpdate(id, { $inc: { followerCount: 1 } });
-             // Return success
-             return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
-        // Closing the success check
-        }
+        // Atomic increment NGO followers
+        await NGO.findByIdAndUpdate(id, { $inc: { followerCount: 1 } });
 
-        // Return 400
-        return res.status(400).json({ success: false, message: 'Already following this NGO' });
+        // Return success
+        return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
     // Catching errors
     } catch (error) {
         // Return 500
         return res.status(500).json({ success: false, message: 'Error following NGO', error: error.message });
-    // Closing the try-catch block
     }
-// Closing the followNGO controller
 };
 
 // Controller to unfollow an NGO

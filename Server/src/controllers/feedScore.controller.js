@@ -24,13 +24,13 @@ export const updateFeedScores = async (req, res) => {
         const user = await User.findById(req.user._id);
         // Guard clause ensuring the user account is active and valid
         if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        
+
         // Calling the internal helper function to perform the actual scoring math
         await computeScores(user);
 
         // Returning a success message once the background computation is finished
         return res.status(200).json({ success: true, message: 'Feed scores updated successfully' });
-    // Catching any computational or database errors during the scoring process
+        // Catching any computational or database errors during the scoring process
     } catch (error) {
         // Returning a 500 status code with the failure details
         return res.status(500).json({ success: false, message: 'Error updating feed scores', error: error.message });
@@ -44,60 +44,92 @@ export const updateFeedScores = async (req, res) => {
 // Controller to retrieve the highest-scoring posts for a personalized donor feed
 export const getTopRankedContent = async (req, res) => {
     // Extracting pagination parameters from the URL query string
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 10, shuffle = false, filter = '' } = req.query;
     // Starting the try block to fetch and format the ranked results
     try {
-        // Fetching the currently authenticated user
         const user = await User.findById(req.user._id);
-        
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        // ─── FOLLOWING FILTER: Only posts from NGOs the user follows ───
+        if (filter === 'following') {
+            const followingIds = user.following || [];
+            if (followingIds.length === 0) {
+                return res.status(200).json({
+                    success: true, count: 0, posts: [],
+                    message: 'Follow some NGOs to see their updates here!'
+                });
+            }
+            const followedPosts = await Post.find({ ngoId: { $in: followingIds } })
+                .sort({ createdAt: -1 })
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .limit(parseInt(limit))
+                .populate('ngoId', 'name logo verified transparencyScore category')
+                .populate('linkedCauseId', 'title goalAmount raisedAmount status');
+            return res.status(200).json({
+                success: true, page: parseInt(page), count: followedPosts.length,
+                posts: followedPosts
+            });
+        }
+
+        // ─── TRENDING FILTER: Posts ranked by engagement ───
+        if (filter === 'trending') {
+            const trendingPosts = await Post.find({})
+                .sort({ likes: -1, donateClicks: -1, createdAt: -1 })
+                .skip((parseInt(page) - 1) * parseInt(limit))
+                .limit(parseInt(limit))
+                .populate('ngoId', 'name logo verified transparencyScore category')
+                .populate('linkedCauseId', 'title goalAmount raisedAmount status');
+            return res.status(200).json({
+                success: true, page: parseInt(page), count: trendingPosts.length,
+                posts: trendingPosts
+            });
+        }
+
+        // ─── DEFAULT "FOR YOU": Algorithmic ranking ───
+        // Force a recalculation if it's the first page to ensure freshness
+        if (parseInt(page) === 1) {
+            await computeScores(user);
+        }
+
         // Searching for pre-calculated scores in the FeedScore collection
         let feedScores = await FeedScore.find({ userId: user._id })
-            // Sorting by score in descending order (best content at the top)
-            .sort({ score: -1 })
-            // Paginating through the results based on page number
-            .skip((page - 1) * limit)
-            // Limit per page for mobile-friendly loading
+            .sort({ score: -1 }) // Primary sort by algorithmic relevance
+            .skip((parseInt(page) - 1) * parseInt(limit))
             .limit(parseInt(limit))
-            // Populating the actual Post data from the linked references
             .populate({
                 path: 'postId',
-                // Deeply populating author and mission details for the UI cards
                 populate: [
-                    { path: 'ngoId', select: 'name logo verified transparencyScore' },
+                    { path: 'ngoId', select: 'name logo verified transparencyScore category' },
                     { path: 'linkedCauseId', select: 'title goalAmount raisedAmount status' }
                 ]
             });
 
-        // "Cold Start" Logic: if no scores exist and it's the first page, compute them immediately
-        if (feedScores.length === 0 && page == 1) {
-            // Triggering the scoring algorithm synchronously for the first-time user
-            await computeScores(user);
-            // Re-fetching the now-populated ranked scores
-            feedScores = await FeedScore.find({ userId: user._id })
-                .sort({ score: -1 })
+        // FALLBACK LOGIC: If the algorithmic feed is empty or becomes sparse
+        if (feedScores.length === 0) {
+            const fallbackPosts = await Post.find({})
+                .sort({ createdAt: -1 }) // Fallback to newest for stability in cold-start
+                .skip((parseInt(page) - 1) * parseInt(limit))
                 .limit(parseInt(limit))
-                .populate({
-                    path: 'postId',
-                    populate: [
-                        { path: 'ngoId', select: 'name logo verified transparencyScore' },
-                        { path: 'linkedCauseId', select: 'title goalAmount raisedAmount status' }
-                    ]
-                });
+                .populate('ngoId', 'name logo verified transparencyScore category')
+                .populate('linkedCauseId', 'title goalAmount raisedAmount status');
+
+            return res.status(200).json({
+                success: true,
+                count: fallbackPosts.length,
+                posts: fallbackPosts,
+                message: 'Displaying global feed'
+            });
         }
 
-        // Returning the high-relevance feed objects back to the client
-        return res.status(200).json({ 
-            // Successful request flag
-            success: true, 
-            // Count of items in this response
-            count: feedScores.length, 
-            // Mapping the score documents back to a clean array of post objects
-            feed: feedScores.map(fs => fs.postId) 
+        // Return ranked feed as 'posts' to match frontend expects
+        return res.status(200).json({
+            success: true,
+            page: parseInt(page),
+            count: feedScores.length,
+            posts: feedScores.map(fs => fs.postId).filter(p => p !== null)
         });
-    // Catching any formatting or data retrieval errors
     } catch (error) {
-        // Returning 500 for internal server failures during feed generation
-        return res.status(500).json({ success: false, message: 'Error fetching ranked feed', error: error.message });
+        return res.status(500).json({ success: false, message: 'Error fetching feed', error: error.message });
     }
 };
 
@@ -107,10 +139,9 @@ export const getTopRankedContent = async (req, res) => {
 
 // Internal Helper function to compute and save scores for all candidate posts
 const computeScores = async (user) => {
-    // Setting the recency window to the last 72 hours for "Fresh" content
-    const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000);
-    // Finding all posts created within that chronological window
-    const candidatePosts = await Post.find({ createdAt: { $gt: threeDaysAgo } });
+    // UPDATED: In early stages, we consider ALL posts for scoring, not just last 72h
+    const candidatePosts = await Post.find({}); 
+    if (candidatePosts.length === 0) return;
 
     // Initializing a temporary array to store the computed results
     const scores = [];
@@ -139,7 +170,7 @@ const computeScores = async (user) => {
             relationshipScore = 1.0;
         } else if (user.donationHistory.length > 0) {
             // Assigning partial score if the user has a history of giving to this NGO
-            relationshipScore = 0.5; 
+            relationshipScore = 0.5;
         }
 
         // --- FACTOR 3: Trending Score (20%) ---
@@ -148,25 +179,24 @@ const computeScores = async (user) => {
         // High-engagement calculation: (likes + weighted donate clicks) divided by age
         trendingScore = Math.min(1.0, (post.likes + (post.donateClicks * 3)) / hoursOld / 10);
 
-        // --- FACTOR 4: Recency Score (15%) ---
+        // --- FACTOR 4: Recency Score (10%) ---
         // Newer posts get higher scores (linear decay over 72 hours)
         recencyScore = 1.0 - (hoursOld / 72);
 
+        // --- FACTOR 5: Discovery Randomness (5%) ---
+        // Adding a small random jitter to make refresh feel alive
+        const randomJitter = Math.random() * 0.05;
+
         // Final weighted sum based on the DonerHQ core ranking formula
-        const finalScore = (interestMatch * 0.35) + (relationshipScore * 0.30) + (trendingScore * 0.20) + (recencyScore * 0.15);
+        const finalScore = (interestMatch * 0.35) + (relationshipScore * 0.30) + (trendingScore * 0.20) + (Math.max(0, recencyScore) * 0.10) + randomJitter;
 
         // Storing the individual score result with expiration data
         scores.push({
-            // Target user
             userId: user._id,
-            // Source post
             postId: post._id,
-            // Computed weight
             score: finalScore,
-            // Transparency: documenting why this post was ranked high
             reasons: interestMatch > 0 ? ['interest_match'] : [],
-            // TTL: Setting an expiration of 30 minutes for this cached score 
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000) 
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000)
         });
     }
 

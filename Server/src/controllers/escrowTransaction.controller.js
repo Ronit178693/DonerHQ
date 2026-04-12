@@ -4,6 +4,8 @@ import EscrowTransaction from '../models/EscrowTransaction.js';
 import Cause from '../models/Cause.js';
 // Importing the NGO model to identify the organization awaiting the fund release
 import NGO from '../models/NGO.js';
+import Donation from '../models/Donation.js';
+import { anchorToStellar } from '../services/stellar.service.js';
 
 /**
  * Escrow Transaction Controller
@@ -37,6 +39,11 @@ export const holdFunds = async (req, res) => {
         if (escrow) {
             // Adding the newly donated amount to the current total held in safety
             escrow.totalHeld += totalAmount;
+            
+            // 🛡️ RE-ANCHOR: Update Stellar proof for the increased capital
+            const txHash = await anchorToStellar(escrow._id.toString(), 'holding_updated', totalAmount);
+            if (txHash) escrow.stellarTxHash = txHash;
+            
             // Committing the updated balance to the database
             await escrow.save();
         } else {
@@ -53,6 +60,13 @@ export const holdFunds = async (req, res) => {
                 // Setting a 60-day deadline for the NGO to provide proof of impact
                 videoDeadline: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) 
             });
+
+            // 🛡️ INITIAL ANCHOR: Submit first record to Stellar
+            const txHash = await anchorToStellar(escrow._id.toString(), 'holding', totalAmount);
+            if (txHash) {
+                escrow.stellarTxHash = txHash;
+                await escrow.save();
+            }
         }
 
         // Returning the updated escrow state and a success confirmation back to the client
@@ -91,6 +105,11 @@ export const releaseFunds = async (req, res) => {
         escrow.released = escrow.totalHeld;
         // Capturing the exact moment the funds were moved
         escrow.releaseDate = new Date();
+
+        // 🛡️ FINAL ANCHOR: Record the disbursement on blockchain
+        const txHash = await anchorToStellar(escrow._id.toString(), 'released', escrow.totalHeld);
+        if (txHash) escrow.stellarTxHash = txHash;
+
         // Committing the release status to the database
         await escrow.save();
 
@@ -123,6 +142,11 @@ export const cancelEscrow = async (req, res) => {
 
         // Updating the status to 'refunded' (flags system to initiate donor returns)
         escrow.status = 'refunded';
+
+        // 🛡️ REFUND ANCHOR: Records the failed mission proof rejection
+        const txHash = await anchorToStellar(escrow._id.toString(), 'refunded', escrow.totalHeld);
+        if (txHash) escrow.stellarTxHash = txHash;
+
         // Committing the cancellation to the database
         await escrow.save();
 
@@ -164,5 +188,42 @@ export const getEscrowStatus = async (req, res) => {
     } catch (error) {
         // Returning a 500 status with the failure details
         return res.status(500).json({ success: false, message: 'Error fetching escrow status', error: error.message });
+    }
+};
+// ═══════════════════════════════════════════════════════════════
+//  NGO SPECIFIC AUDIT — List all escrows belonging to the logged-in NGO
+// ═══════════════════════════════════════════════════════════════
+export const getMyEscrows = async (req, res) => {
+    try {
+        const ngo = await NGO.findOne({ userId: req.user._id });
+        if (!ngo) return res.status(404).json({ success: false, message: 'NGO Profile not found' });
+
+        const escrows = await EscrowTransaction.find({ ngoId: ngo._id })
+            .populate('causeId', 'title goalAmount raisedAmount status')
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({ success: true, escrows });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Error fetching NGO escrows', error: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  DONOR SPECIFIC AUDIT — List all escrows for causes the donor contributed to
+// ═══════════════════════════════════════════════════════════════
+export const getDonorEscrows = async (req, res) => {
+    try {
+        // Find all unique cause IDs the user has donated to
+        const userDonations = await Donation.find({ donorId: req.user._id, status: 'paid' }).distinct('causeId');
+        
+        // Find escrow transactions for those causes
+        const escrows = await EscrowTransaction.find({ causeId: { $in: userDonations } })
+            .populate('causeId', 'title goalAmount raisedAmount status')
+            .populate('ngoId', 'name logo')
+            .sort({ updatedAt: -1 });
+
+        return res.status(200).json({ success: true, escrows });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Error fetching Donor escrows', error: error.message });
     }
 };

@@ -1,17 +1,14 @@
-// Importing the Donation model to interact with the transaction records in the database
+import mongoose from 'mongoose';
 import Donation from '../models/Donation.js';
-// Importing the User model to manage donor profiles and update their contributions
 import User from '../models/User.js';
-// Importing the NGO model to track total funds raised by organizations
 import NGO from '../models/NGO.js';
-// Importing the Cause model to update fundraising progress for specific missions
 import Cause from '../models/Cause.js';
-// Importing the configured Razorpay instance for payment gateway interactions
+import EscrowTransaction from '../models/EscrowTransaction.js';
 import razorpay from '../config/razorpay.js';
-// Importing the native crypto module for secure signature verification
 import crypto from 'crypto';
-// Importing our real-time engine to emit global donation alerts
 import { getIO } from '../socket.js';
+import sendEmail from '../utils/sendEmail.js';
+
 
 /**
  * Donation Controller
@@ -111,27 +108,59 @@ export const verifyPayment = async (req, res) => {
             frequency: frequency || 'once'
         });
 
+        // 📧 DONATION RECEIPT: Official audit trail for the donor
+        const receiptHtml = `
+            <div style="font-family: sans-serif; background: #0a0a0a; color: #fff; padding: 40px; border-radius: 16px; border: 1px solid #b9ffe822;">
+                <h1 style="color: #b9ffe8; font-size: 20px;">Contribution Receipt — SECURED</h1>
+                <p>Hello ${req.user.name},</p>
+                <div style="background: rgba(185,255,232,0.05); padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><b>Amount:</b> ₹${amount}</p>
+                    <p style="margin: 5px 0;"><b>Mission:</b> ${cause.title}</p>
+                    <p style="margin: 5px 0;"><b>Transaction ID:</b> ${razorpay_payment_id}</p>
+                    <p style="margin: 5px 0;"><b>Status:</b> Held in Celestial Escrow</p>
+                </div>
+                <p style="font-size: 14px; color: #aaa;">Your funds are currently locked and will only be released once the NGO provides immutable proof of impact. You can track this in your dashboard.</p>
+                <a href="${process.env.CLIENT_URL}donor/dashboard" style="display: inline-block; background: #b9ffe8; color: #000; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 20px;">AUDIT MY LEDGER</a>
+            </div>
+        `;
+        sendEmail(req.user.email, `Precision Impact Receipt: ₹${amount} Secured`, receiptHtml);
+
         // Updating the User’s contribution history and social leaderboard score
         await User.findByIdAndUpdate(req.user._id, { 
             $push: { donationHistory: newDonation._id },
             $inc: { leaderboardScore: 10 }
         });
 
-        // Updating the Cause's financial state to reflect the new donation
-        await Cause.findByIdAndUpdate(causeId, { 
+        // 1. Updating the Cause's financial state
+        const updatedCause = await Cause.findByIdAndUpdate(causeId, { 
             $inc: { raisedAmount: Number(amount), donorCount: 1 } 
-        });
+        }, { new: true });
 
-        // Updating the NGO's total fundraising reach
+        // 2. Updating the NGO's total fundraising reach
         await NGO.findByIdAndUpdate(cause.ngoId, { 
             $inc: { totalRaised: Number(amount) } 
         });
+
+        // 3. 🛡️ UPDATING ESCROW LEDGER — Ensure transparency tracking
+        // We initialize or update the escrow holding for this specific cause
+        await EscrowTransaction.findOneAndUpdate(
+            { causeId: cause._id },
+            { 
+                $inc: { totalHeld: Number(amount) },
+                $set: { 
+                    ngoId: cause.ngoId,
+                    status: 'holding' // Reset to holding if it was empty/new
+                }
+            },
+            { upsert: true, new: true }
+        );
 
         // Returning the success response including the verified donation record
         res.status(200).json({ 
             success: true, 
             message: 'Donation verified and processed successfully', 
-            donation: newDonation 
+            donation: newDonation,
+            updatedCause // Return this so the frontend can update immediately
         });
 
         // 🚀 Real-time Engagement: Emitting a broadcast event to all connected clients
@@ -184,14 +213,24 @@ export const getDonationHistory = async (req, res) => {
         }
 
         // Finding donation records matching the authorized query filter
-        const donations = await Donation.find(query)
+        let donations = await Donation.find(query)
             .populate('donorId', 'name email')
-            .populate('ngoId', 'name logo')
-            .populate('causeId', 'title')
+            .populate('ngoId', 'name logo verified')
+            .populate('causeId', 'title goalAmount raisedAmount status coverImage')
             .sort({ createdAt: -1 });
 
+        // Augment each donation with the latest Escrow state for that cause
+        const augmentedDonations = await Promise.all(donations.map(async (donation) => {
+            const escrow = await EscrowTransaction.findOne({ causeId: donation.causeId?._id }).select('status released totalHeld');
+            return {
+                ...donation.toObject(),
+                escrowStatus: escrow ? escrow.status : 'holding',
+                releasedAmount: escrow ? escrow.released : 0
+            };
+        }));
+
         // Returning the array of transaction logs and the total count to the client
-        return res.status(200).json({ success: true, count: donations.length, donations });
+        return res.status(200).json({ success: true, count: augmentedDonations.length, donations: augmentedDonations });
     } catch (error) {
         return res.status(500).json({ success: false, message: 'Error fetching donation history', error: error.message });
     }

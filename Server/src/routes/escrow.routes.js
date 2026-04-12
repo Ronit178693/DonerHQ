@@ -5,7 +5,9 @@ import {
     holdFunds,
     releaseFunds,
     cancelEscrow,
-    getEscrowStatus
+    getEscrowStatus,
+    getMyEscrows,
+    getDonorEscrows
 } from '../controllers/escrowTransaction.controller.js';
 // Importing the protect middleware to ensure only logged-in users access certain routes
 import { protect } from '../middlewares/auth.middleware.js';
@@ -31,6 +33,10 @@ router.post('/release/:id', releaseFunds);
 
 // End-point to handle refunds or cancellations of pending escrow transactions (Admin gated in controller)
 router.post('/cancel/:id', cancelEscrow);
+
+// Profile specific ledger endpoints
+router.get('/my-ledger', getMyEscrows);
+router.get('/donor-ledger', getDonorEscrows);
 
 // Exporting the escrow router configuration
 export default router;

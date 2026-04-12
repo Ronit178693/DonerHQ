@@ -35,6 +35,8 @@ import escrowRoutes from './routes/escrow.routes.js';
 import impactVideoRoutes from './routes/impactVideo.routes.js';
 // Importing our algorithmic feed routes for high-relevance content ranking
 import feedRoutes from './routes/feed.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+
 
 // Initializing the express application instance
 const app = express();
@@ -72,6 +74,12 @@ app.use(cors({
 // Parsing incoming JSON payloads before they reach our route handlers
 app.use(express.json());
 
+// Parsing URL-encoded form data (needed for multipart/form-data fallback)
+app.use(express.urlencoded({ extended: true }));
+
+// Serving uploaded media files statically (local fallback when Cloudinary is unavailable)
+app.use('/uploads', express.static('public/uploads'));
+
 // Parsing all cookies from the request for authentication and session management
 app.use(cookieParser());
 
@@ -104,6 +112,9 @@ app.use('/api/impact-videos', impactVideoRoutes);
 
 // Mounting our algorithmic feed ranking routes under the /api/feed path
 app.use('/api/feed', feedRoutes);
+
+// Mounting our administrative control routes under the /api/admin path
+app.use('/api/admin', adminRoutes);
 
 // Setting a simple default endpoint for server connectivity testing
 app.get('/', (req, res) => {

@@ -6,10 +6,49 @@ import NGO from '../models/NGO.js';
 import Cause from '../models/Cause.js';
 // Importing Post model to handle the personalized social media feed
 import Post from '../models/Post.js';
+import Donation from '../models/Donation.js';
+import EscrowTransaction from '../models/EscrowTransaction.js';
 
 // ═══════════════════════════════════════════════════════════════
 //  USER PROFILE & SETTINGS
 // ═══════════════════════════════════════════════════════════════
+
+// Controller to retrieve the full profile of the logged-in user with total impact calculations
+export const getMyInfo = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        
+        // Summing all successful donations to get real 'Total Capital Deployed'
+        const donations = await Donation.find({ donorId: req.user._id, status: 'paid' });
+        const totalDonated = donations.reduce((acc, d) => acc + d.amount, 0);
+
+        // Summing funds currently in escrow (not yet released)
+        const activeEscrows = await EscrowTransaction.find({ 
+            causeId: { $in: donations.map(d => d.causeId) },
+            status: { $nin: ['released', 'refunded'] }
+        });
+        const escrowBalance = activeEscrows.reduce((acc, e) => acc + e.totalHeld, 0);
+
+        // Calculate Rank: Count users with higher leaderboardScore than current user
+        const rank = await User.countDocuments({ 
+            role: 'donor', 
+            leaderboardScore: { $gt: user.leaderboardScore } 
+        }) + 1;
+
+        const responseData = {
+            ...user.toObject(),
+            totalDonated,
+            escrowBalance,
+            donationCount: donations.length,
+            rank
+        };
+
+        return res.status(200).json({ success: true, user: responseData });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 // Controller to retrieve the public profile of any user or their own complete dashboard
 export const getUserProfile = async (req, res) => {
@@ -322,22 +361,46 @@ export const getWishlist = async (req, res) => {
 
 // Retrieve the top users based on streak and consistency score
 export const getLeaderboard = async (req, res) => {
-    // Protective enclosure
     try {
-        // Querying for accounts labelled strictly as donors
-        const topUsers = await User.find({ role: 'donor' })
-            // Leaderboard focuses on consistency (streak) over pure donation amounts
-            .sort({ leaderboardScore: -1, streak: -1 })
-            // Trimming data specifically for the leaderboard views
-            .select('name leaderboardScore streak')
-            // Capping results at top 100 players
-            .limit(100);
+        // We use aggregation to get totalDonated for each user and sort them
+        const leaderboard = await User.aggregate([
+            { $match: { role: 'donor' } },
+            {
+                $lookup: {
+                    from: 'donations',
+                    localField: '_id',
+                    foreignField: 'donorId',
+                    as: 'donations'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    leaderboardScore: 1,
+                    streak: 1,
+                    totalDonated: {
+                        $sum: {
+                            $map: {
+                                input: {
+                                    $filter: {
+                                        input: "$donations",
+                                        as: "donation",
+                                        cond: { $eq: ["$$donation.status", "paid"] }
+                                    }
+                                },
+                                as: "d",
+                                in: "$$d.amount"
+                            }
+                        }
+                    }
+                }
+            },
+            { $sort: { totalDonated: -1, leaderboardScore: -1 } },
+            { $limit: 100 }
+        ]);
 
-        // Funneling the finalized leaderboard array back out
-        return res.status(200).json({ success: true, topUsers });
-    // Safety net
+        return res.status(200).json({ success: true, leaderboard });
     } catch (error) {
-        // Server side failure dispatch
         return res.status(500).json({ success: false, message: error.message });
     }
 };
