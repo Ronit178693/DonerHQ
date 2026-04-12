@@ -1,0 +1,96 @@
+/* ═══════════════════════════════════════════════════════════════
+   Registration Page Styles
+   ═══════════════════════════════════════════════════════════════ */
+
+.register-page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* Same side panel structure as Login but with different content */
+@media (min-width: 1024px) {
+  .register-visual-panel {
+    display: flex;
+    width: 50%;
+    position: relative;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-16) var(--space-20);
+    background: var(--color-background);
+  }
+}
+
+.visual-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  z-index: 0;
+}
+
+.visual-content {
+  position: relative;
+  z-index: 10;
+}
+
+.visual-branding h1 {
+  font-family: var(--font-headline);
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: var(--color-primary-dim);
+  letter-spacing: -0.05em;
+  margin-bottom: var(--space-4);
+}
+
+.role-tab-group {
+  display: flex;
+  background: var(--color-surface-container-low);
+  padding: 0.25rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.role-tab {
+  flex: 1;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: all var(--transition-fast);
+  color: var(--color-on-surface-variant);
+}
+.role-tab.active {
+  background: var(--color-surface-container-highest);
+  color: var(--color-primary);
+}
+
+.register-form-card {
+  padding: 2.5rem 3rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+
+.form-group-sm {
+  margin-bottom: 1.25rem;
+}
+
+.control-label-sm {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.5rem;
+  margin-left: 0.25rem;
+  display: block;
+}

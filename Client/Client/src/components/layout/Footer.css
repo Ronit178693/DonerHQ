@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════════════
+   Ultra-Slim Footer (Celestial Ledger Minimalist)
+   ═══════════════════════════════════════════════════════════════ */
+
+.slim-footer {
+  background: var(--color-background, #0a0c12);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.25rem 0;
+  margin-top: auto;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+}
+
+.footer-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Left: Logo & Status */
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-logo-slim {
+  font-family: var(--font-headline, 'Space Grotesk', sans-serif);
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-primary, #b9ffe8);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.sync-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(185, 255, 232, 0.06);
+  border: 1px solid rgba(185, 255, 232, 0.1);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: var(--color-primary, #b9ffe8);
+  letter-spacing: 0.05em;
+}
+
+.pulse-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary);
+  animation: pulse 2s infinite;
+}
+
+/* Center: Nav */
+.footer-nav-slim {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footer-nav-slim a {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface-variant, #a9abb3);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-nav-slim a:hover {
+  color: var(--color-primary, #b9ffe8);
+}
+
+/* Right: Copyright & Socials */
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.copyright-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-outline, #73757d);
+}
+
+.footer-socials {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-mini-link {
+  color: var(--color-outline, #73757d);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.social-mini-link .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.social-mini-link:hover {
+  color: var(--color-primary, #b9ffe8);
+  transform: translateY(-1px);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 900px) {
+  .footer-flex {
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+  }
+}

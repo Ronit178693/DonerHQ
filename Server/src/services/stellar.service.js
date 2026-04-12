@@ -1,6 +1,5 @@
-
-import pkg from 'stellar-sdk';
-const { Server, Keypair, Asset, Operation, TransactionBuilder, Networks } = pkg;
+import * as StellarSdk from 'stellar-sdk';
+const { Keypair, Asset, Operation, TransactionBuilder, Networks, Horizon } = StellarSdk;
 
 /**
  * STELLAR LEDGER SERVICE
@@ -8,7 +7,7 @@ const { Server, Keypair, Asset, Operation, TransactionBuilder, Networks } = pkg;
  * It provides an un-deletable audit trail for donors and NGOs.
  */
 
-const server = new Server('https://horizon-testnet.stellar.org');
+const server = new Horizon.Server('https://horizon-testnet.stellar.org');
 
 /**
  * Anchors a platform event to the Stellar network
