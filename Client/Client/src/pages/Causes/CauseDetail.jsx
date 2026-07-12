@@ -45,7 +45,7 @@ export default function CauseDetail() {
 
       // 2. Configure Razorpay Options
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SYJU0pNkKgk6kU', 
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
         amount: order.amount,
         currency: order.currency,
         name: "DonerHQ",

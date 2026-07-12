@@ -14,6 +14,8 @@ import connectDB from './config/db.js';
 // Importing our custom Socket.io initialization logic for real-time features
 import { initSocket } from './socket.js';
 
+import compression from 'compression';
+
 
 
 // Importing our authentication routes for handling login and registration
@@ -42,6 +44,8 @@ import adminRoutes from './routes/admin.routes.js';
 // Initializing the express application instance
 const app = express();
 
+app.use(helmet())
+app.use(compression());
 // Enabling trust proxy for secure cookies behind reverse proxies (like Vercel)
 app.set('trust proxy', 1);
 
