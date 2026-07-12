@@ -42,6 +42,8 @@ import adminRoutes from './routes/admin.routes.js';
 // Initializing the express application instance
 const app = express();
 
+app.use(helmet())
+
 // Enabling trust proxy for secure cookies behind reverse proxies (like Vercel)
 app.set('trust proxy', 1);
 
