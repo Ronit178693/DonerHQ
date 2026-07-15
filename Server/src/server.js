@@ -16,6 +16,8 @@ import { initSocket } from './socket.js';
 
 import compression from 'compression';
 
+import helmet from 'helmet';
+
 
 
 // Importing our authentication routes for handling login and registration
@@ -39,6 +41,7 @@ import impactVideoRoutes from './routes/impactVideo.routes.js';
 // Importing our algorithmic feed routes for high-relevance content ranking
 import feedRoutes from './routes/feed.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import contactRoutes from './routes/contact.route.js';
 
 
 // Initializing the express application instance
@@ -120,6 +123,8 @@ app.use('/api/feed', feedRoutes);
 
 // Mounting our administrative control routes under the /api/admin path
 app.use('/api/admin', adminRoutes);
+
+app.use('/api/contact', contactRoutes);
 
 // Setting a simple default endpoint for server connectivity testing
 app.get('/', (req, res) => {

@@ -126,10 +126,15 @@ export const verifyPayment = async (req, res) => {
         `;
         sendEmail(req.user.email, `Precision Impact Receipt: ₹${amount} Secured`, receiptHtml);
 
+        // Calculate points based on Consistency (streak) and Amount (logarithmic scale)
+        const streak = req.user.streak || 0;
+        const logAmount = Math.log10(Math.max(1, Number(amount)));
+        const pointsAdded = Math.round((10 * (streak + 1)) + logAmount);
+
         // Updating the User’s contribution history and social leaderboard score
         await User.findByIdAndUpdate(req.user._id, { 
             $push: { donationHistory: newDonation._id },
-            $inc: { leaderboardScore: 10 }
+            $inc: { leaderboardScore: pointsAdded }
         });
 
         // 1. Updating the Cause's financial state (populate ngoId for frontend badge)

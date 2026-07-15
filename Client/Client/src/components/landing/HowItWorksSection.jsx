@@ -43,7 +43,6 @@ export default function HowItWorksSection({ causes }) {
             <label className="label-sm">Urgent Missions</label>
             <h2 className="display-md font-headline">Featured Causes</h2>
           </div>
-          <Link to="/causes" className="text-primary font-bold hover-underline">Browse All Campaigns →</Link>
         </div>
         <div className="features-grid">
           {causes.map((cause, i) => (
@@ -66,7 +65,7 @@ export default function HowItWorksSection({ causes }) {
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem', alignItems: 'center' }}>
                          <span className="label-xs text-on-surface-variant font-bold">{cause.donors.toLocaleString()} Donors</span>
-                         <Link to={`/causes/${cause.id}`} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Donate Now</Link>
+                         <Link  className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Donate Now</Link>
                       </div>
                    </div>
                 </div>
