@@ -1,10 +1,57 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import API from '../../api/axios';
 
 /* ═══════════════════════════════════════════════════════════
    SECTION: Contact — About blurb, contact info, and form
    ═══════════════════════════════════════════════════════════ */
 export default function ContactSection({ isAuthenticated }) {
+
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async(e) => {
+    e.preventDefault();
+    setLoading(true);
+    try{
+      setError(null);
+      const res = await API.post("contact/send", formData);
+      if(res.data.success){
+        alert("Message sent successfully!");
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      }
+    }
+    catch(err){
+      setError(err.response?.data?.message || err.message);
+    }
+    finally{
+      setLoading(false)
+    }
+  };
+
+
   return (
     <>
       {/* About Section */}
@@ -131,22 +178,23 @@ export default function ContactSection({ isAuthenticated }) {
               </div>
             </motion.div>
 
-            <motion.form 
+             <motion.form 
               className="contact-form glass-panel"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleSubmit}
             >
               <div className="form-row">
-                <input type="text" placeholder="Your Name" className="form-input" />
-                <input type="email" placeholder="Your Email" className="form-input" />
+                <input type="text" name="name" placeholder="Your Name" className="form-input" value={formData.name} onChange={handleChange} />
+                <input type="email" name="email" placeholder="Your Email" className="form-input" value={formData.email} onChange={handleChange}/>
               </div>
-              <input type="text" placeholder="Subject" className="form-input" />
-              <textarea placeholder="Your Message" rows={5} className="form-input form-textarea"></textarea>
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }}>
-                Send Message
+              <input type="text" name="subject" placeholder="Subject" className="form-input" value={formData.subject} onChange={handleChange}/>
+              <textarea name="message" placeholder="Your Message" rows={5} className="form-input form-textarea" value={formData.message} onChange={handleChange}></textarea>
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} disabled={loading}>
+                {loading ? 'Sending Message...' : 'Send Message'}
               </button>
+              {error && <p style={{ color: '#ff716c', marginTop: '10px', fontSize: '14px' }}>{error}</p>}
             </motion.form>
           </div>
         </div>

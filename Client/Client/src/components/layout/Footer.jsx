@@ -14,14 +14,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Horizontal Links */}
-        <nav className="footer-nav-slim">
-          <Link to="/causes">Causes</Link>
-          <Link to="/ngos">NGOs</Link>
-          <Link to="/feed">Feed</Link>
-          <Link to="/escrow">Escrow</Link>
-          <Link to="/about">About</Link>
-        </nav>
+
 
         {/* Rights & Socials */}
         <div className="footer-right">
