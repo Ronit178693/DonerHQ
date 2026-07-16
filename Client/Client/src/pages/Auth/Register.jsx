@@ -19,6 +19,7 @@ export default function Register() {
     category: 'Education'
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const register = useAuthStore((state) => state.register);
@@ -152,10 +153,22 @@ export default function Register() {
 
               <div className="form-group-sm">
                 <label className="control-label-sm" htmlFor="password">Secure Access Key</label>
-                <input 
-                  className="form-input" id="password" type="password" placeholder="••••••••••••" required 
-                  value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    className="form-input" id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••••••" required 
+                    value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    style={{ paddingRight: '3.5rem' }}
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-on-surface-variant)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                  >
+                    <span className="material-symbols-outlined">
+                      {showPassword ? 'visibility' : 'visibility_off'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Donor Specific: Interests */}

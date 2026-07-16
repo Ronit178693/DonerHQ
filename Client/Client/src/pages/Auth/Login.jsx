@@ -6,6 +6,7 @@ import './Login.css';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -110,15 +111,21 @@ export default function Login() {
                   <input 
                     className="form-input"
                     id="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••••••"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{ paddingRight: '3.5rem' }}
                   />
-                  <button type="button" style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-on-surface-variant)' }}>
-                    <span className="material-symbols-outlined">visibility</span>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-on-surface-variant)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                  >
+                    <span className="material-symbols-outlined">
+                      {showPassword ? 'visibility' : 'visibility_off'}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -138,16 +145,6 @@ export default function Login() {
               <div className="divider-line"></div>
             </div>
 
-            <div className="social-grid">
-               <button className="social-btn">
-                 <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1XefrV_K-gcaYM0G-TpbBg7aolaXkdAGc8ZNW5EY210fk1VuUdhR0GebzxQL3cXmwV_jyXlqd10yJTrSif_UJJybxI5UVGilinnmmB5Rcegg9pLbbl6rfoWoHMZ2vTDzZZyqycUPboTSr0OhU8ArQ4h_2cvhSVycSrVlFWZQmymZvL9GOa2n0Z_aTodWhvV2HLLtOTgLNqF4MLTbrsYTZf5DOPY8vyLvmGZIs_9a6GZ9nt0gttOt94bZKh-DivKWnmCcOgtR_tmld" alt="Google" style={{ width: '1.25rem', height: '1.25rem' }} />
-                 <span className="body-sm font-bold">Google</span>
-               </button>
-               <button className="social-btn">
-                 <span className="material-symbols-outlined text-primary">wallet</span>
-                 <span className="body-sm font-bold">Web3</span>
-               </button>
-            </div>
 
             <p className="bottom-text font-manrope">
               New here? 
