@@ -1,17 +1,34 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import API from '../../api/axios';
+
 
 /* ═══════════════════════════════════════════════════════════
    SECTION: HowItWorks — 3-step explainer + Featured Causes
    ═══════════════════════════════════════════════════════════ */
-export default function HowItWorksSection({ causes }) {
+export default function HowItWorksSection() {
+
+  const [causes, getCauses] = useState([])
+
+  useEffect(() => {
+    const res = async () => {
+      try {
+        const res = await API.get('/causes?limit=3')
+        getCauses(res.data.causes || [])
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    res()
+  }, [])
   return (
     <>
       {/* How It Works */}
       <section className="how-it-works-section">
         <div className="section-header">
           <label className="label-sm">Architecture of Philanthropy</label>
-          <h2 className="display-md">How the Ledger <br/> <span className="text-primary font-headline">Secures Your Impact</span></h2>
+          <h2 className="display-md">How the Ledger <br /> <span className="text-primary font-headline">Secures Your Impact</span></h2>
         </div>
         <div className="features-grid">
           {[
@@ -19,7 +36,7 @@ export default function HowItWorksSection({ causes }) {
             { icon: 'lock', title: 'Donate Securely', text: 'Funds are held in an escrow ledger and only released once the NGO provides evidence of the specific task execution.', fill: 1 },
             { icon: 'visibility', title: 'Watch Your Impact', text: 'Receive personalized video updates and blockchain-verifiable reports showing exactly how your donation was utilized.', fill: 1 },
           ].map((item, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               className="feature-card"
               initial={{ opacity: 0, x: -20 }}
@@ -45,33 +62,36 @@ export default function HowItWorksSection({ causes }) {
           </div>
         </div>
         <div className="features-grid">
-          {causes.map((cause, i) => (
-            <motion.div key={i} className="cause-card-container" whileHover={{ y: -10 }}>
-              <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ position: 'relative', height: '250px' }}>
-                  <img src={cause.image} alt={cause.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div className="label-sm" style={{ position: 'absolute', top: 'var(--space-4)', left: 'var(--space-4)', background: 'rgba(0,0,0,0.6)', padding: '0.25rem 0.75rem', borderRadius: '4px' }}>{cause.category}</div>
-                </div>
-                <div style={{ padding: '2rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                   <h3 className="title-md" style={{ marginBottom: '1rem' }}>{cause.title}</h3>
-                   <p className="body-sm" style={{ color: 'var(--color-on-surface-variant)', marginBottom: '2rem', flex: 1 }}>{cause.description}</p>
-                   <div style={{ marginTop: 'auto' }}>
+          {causes.map((cause, i) => {
+            const percent = Math.min(Math.round(((cause.raisedAmount || 0) / (cause.goalAmount || 1)) * 100), 100);
+            return (
+              <motion.div key={cause._id || i} className="cause-card-container" whileHover={{ y: -10 }}>
+                <div className="glass-panel" style={{ borderRadius: 'var(--radius-xl)', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ position: 'relative', height: '250px' }}>
+                    <img src={cause.coverImage} alt={cause.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div className="label-sm" style={{ position: 'absolute', top: 'var(--space-4)', left: 'var(--space-4)', background: 'rgba(0,0,0,0.6)', padding: '0.25rem 0.75rem', borderRadius: '4px' }}>{cause.category}</div>
+                  </div>
+                  <div style={{ padding: '2rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 className="title-md" style={{ marginBottom: '1rem' }}>{cause.title}</h3>
+                    <p className="body-sm" style={{ color: 'var(--color-on-surface-variant)', marginBottom: '2rem', flex: 1 }}>{cause.description}</p>
+                    <div style={{ marginTop: 'auto' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-                         <span>₹{cause.raised.toLocaleString('en-IN')} raised</span>
-                         <span className="text-primary">{cause.percent}%</span>
+                        <span>₹{(cause.raisedAmount || 0).toLocaleString('en-IN')} raised</span>
+                        <span className="text-primary">{percent}%</span>
                       </div>
                       <div className="progress-bar-bg" style={{ height: '6px', background: 'var(--color-surface-container-highest)', borderRadius: '3px', overflow: 'hidden' }}>
-                         <div className="bg-gradient-primary" style={{ height: '100%', width: `${cause.percent}%` }}></div>
+                        <div className="bg-gradient-primary" style={{ height: '100%', width: `${percent}%` }}></div>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem', alignItems: 'center' }}>
-                         <span className="label-xs text-on-surface-variant font-bold">{cause.donors.toLocaleString()} Donors</span>
-                         <Link  className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Donate Now</Link>
+                        <span className="label-xs text-on-surface-variant font-bold">{(cause.donorCount || 0).toLocaleString()} Donors</span>
+                        <Link  className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>Donate Now</Link>
                       </div>
-                   </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </section>
     </>
