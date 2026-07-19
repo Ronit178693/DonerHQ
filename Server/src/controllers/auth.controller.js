@@ -366,28 +366,6 @@ export const logout = async (req, res) => {
 // Closing the logout controller
 };
 
-// End-point to retrieve the current profile of a logged-in donor, NGO, or admin
-export const getMe = async (req, res) => {
-    // Starting the lookup for the requester's own profile data
-    try {
-        // Fetching the user from the database using the ID provided by the 'protect' middleware
-        const user = await User.findById(req.user._id).populate('ngoProfile');
-        // Validating the existence of the current account session
-        if (!user) {
-            // Returning 404 if the session user record is no longer present
-            return res.status(404).json({ success: false, message: 'User not found' });
-        // Closing the user existence check
-        }
-        // Returning the successfully fetched profile data back to the client
-        return res.status(200).json({ success: true, user });
-    // Catching any database lookup issues
-    } catch (error) {
-        // Returning a 500 status message
-        return res.status(500).json({ success: false, message: error.message });
-    // Closing the try-catch block
-    }
-// Closing the getMe controller
-};
 
 // End-point to initiate a secure password reset via OTP (One-Time Password) to email
 export const passwordResetOTP = async (req, res) => {
@@ -409,8 +387,8 @@ export const passwordResetOTP = async (req, res) => {
         // Encrypting the OTP before saving it to the database (stored as string)
         const hashedOtp = crypto.createHash('sha256').update(otp).digest('hex');
         
-        // Setting an expiration for the code (10 minutes from now)
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        // Setting an expiration for the code (3 minutes from now)
+        const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
 
         // Updating the user record with the recovery information
         user.otp = hashedOtp;
@@ -419,9 +397,11 @@ export const passwordResetOTP = async (req, res) => {
         // Committing the recovery state changes to the database
         await user.save();
 
+        sendEmail(email, 'Password Reset Otp'+ otp +'is valid for 3 minutes.');
+
         // LOGIC: At this point, we would call an email service (like SendGrid or AWS SES)
         // For demonstration, we'll return the OTP directly in the response (INSECURE - FOR DEV ONLY)
-        return res.status(200).json({ 
+        return res.status(200).json({  
             // Flag success
             success: true, 
             // Informative message
@@ -446,7 +426,7 @@ export const resetPassword = async (req, res) => {
     // Starting the password rotation with security checks
     try {
         // Validating the input presence
-        if (!email || !otp || !newPassword) {
+        if ( !otp || !newPassword) {
             // Returning 400 if any field is missing
             return res.status(400).json({ success: false, message: 'All fields are required' });
         // Closing the presence check
