@@ -25,9 +25,6 @@ export default function HeroSection({ isAuthenticated }) {
               <Link to="/register" className="btn btn-primary btn-lg-padding">
                 Start Giving
               </Link>
-              <Link to="/causes" className="btn btn-glass btn-lg-padding">
-                View Causes
-              </Link>
             </>
           ) : (
             <Link to="/causes" className="btn btn-primary btn-lg-padding">

@@ -11,7 +11,7 @@ import {
     // Session termination controller
     logout,
     // Current user lookup controller
-    getMe,
+   
     // Password reset request controller
     passwordResetOTP,
     // Password reset execution controller
@@ -60,7 +60,7 @@ router.post('/reset-password', resetPassword);
 // End-point to log out an authenticated user and clear their session cookie
 router.post('/logout', protect, logout);
 // End-point to retrieve the current profile of a logged-in donor, NGO, or admin
-router.get('/me', protect, getMe);
+
 
 // Administrative end-point to approve or reject organizations awaiting review
 router.post('/admin/verify-ngo', protect, authorize('admin'), verifyNGO);
