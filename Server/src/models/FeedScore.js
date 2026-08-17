@@ -27,6 +27,7 @@ const feedScoreSchema = new mongoose.Schema({
 
 // Optimization: Index to find personalized scores for a specific user instantly
 feedScoreSchema.index({ userId: 1 });
+feedScoreSchema.index({ userId: 1, served: 1, score: -1 });
 
 // TTL Index: This is a performance booster. It automatically deletes 
 // recommendation scores after 1800 seconds (30 minutes) to keep the DB small.

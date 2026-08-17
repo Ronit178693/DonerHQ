@@ -142,6 +142,10 @@ ngoSchema.pre('save', function () {
 ngoSchema.index({ category: 1 });
 // Creating an index on the status field for faster admin lookups
 ngoSchema.index({ status: 1 });
+// Creating an index on userId for fast NGO profile lookup by user account
+ngoSchema.index({ userId: 1 });
+// Creating an index on tags for category/tag discovery
+ngoSchema.index({ tags: 1 });
 
 // Compiling the NGO model from the schema
 const NGO = mongoose.model('NGO', ngoSchema);

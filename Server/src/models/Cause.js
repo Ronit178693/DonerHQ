@@ -40,7 +40,11 @@ const causeSchema = new mongoose.Schema({
     donorCount: { type: Number, default: 0 },
     
     // Categorization for filtering and AI recommendations (matches NGO/User interest categories)
-    category: { type: String },
+
+    categories: [{ type: String }],
+    
+    // Searchable AI tags/keywords (e.g., ["monsoon-floods", "water-filtration", "assam"])
+    tags: [{ type: String }],
     
     // Main thumbnail for the home feed and search results (hosted on Cloudinary)
     coverImage: { type: String } 
@@ -52,6 +56,7 @@ const causeSchema = new mongoose.Schema({
 
 // Optimization: Index to instantly load all causes belonging to a specific NGO profile
 causeSchema.index({ ngoId: 1 });
+causeSchema.index({ tags: 1, categories: 1 });
 
 const Cause = mongoose.model('Cause', causeSchema);
 export default Cause;
