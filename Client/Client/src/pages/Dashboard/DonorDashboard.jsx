@@ -8,7 +8,6 @@ import './DonorDashboard.css';
 const TABS = [
   { id: 'dashboard', label: 'Overview', icon: 'dashboard' },
   { id: 'ledger', label: 'Escrow Ledger', icon: 'account_balance_wallet' },
-  { id: 'teams', label: 'Teams', icon: 'group' },
   { id: 'preferences', label: 'Preferences', icon: 'style' }
 ];
 
@@ -261,7 +260,7 @@ export default function DonorDashboard() {
             </motion.div>
           )}
 
-          {['teams', 'preferences'].includes(activeTab) && (
+          {[ 'preferences'].includes(activeTab) && (
             <motion.div 
                key="placeholder" 
                initial={{ opacity: 0 }} 

@@ -29,10 +29,11 @@ const ngoSchema = new mongoose.Schema({
     // Category for classification and filtering
     category: {
         // Data type is string
-        type: String,
-        // Category is required
-        required: true
+        type: String
     },
+    tags: [{
+    type: String
+}],
 
     // Main location of the NGO
     location: {

@@ -76,6 +76,11 @@ const userSchema = new mongoose.Schema({
         // Restricts values to the predefined interest categories
         enum: INTEREST_CATEGORIES
     }],
+    // Stores the raw text input given by the user
+    rawPreferenceDescription: {
+        type: String,
+        default: ''
+    },
 
     // Flag to track if the onboarding quiz is completed
     onboardingComplete: {
