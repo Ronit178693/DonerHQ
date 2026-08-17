@@ -48,16 +48,18 @@ export default function Navbar() {
 
         {/* Global Navigation Links */}
         <div className="nav-links">
-          {/* Universal surfing links */}
-          <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Home</NavLink>
-          <a href="/#about" className="nav-link">About</a>
-          <a href="/#contact" className="nav-link">Contact</a>
+          {/* Universal surfing links - only visible when not logged in */}
+          {!isAuthenticated && (
+            <>
+              <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>Home</NavLink>
+              <a href="/#about" className="nav-link">About</a>
+              <a href="/#contact" className="nav-link">Contact</a>
+            </>
+          )}
 
           {/* Post-Auth Platform Links */}
           {isAuthenticated && (
             <>
-              <div className="nav-divider" />
-              
               <NavLink to="/feed" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Feed
               </NavLink>

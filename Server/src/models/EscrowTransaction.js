@@ -43,5 +43,9 @@ const escrowTransactionSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Indexes for fast cause escrow status lookup and admin verification queue filtering
+escrowTransactionSchema.index({ causeId: 1 });
+escrowTransactionSchema.index({ ngoId: 1, status: 1 });
+
 const EscrowTransaction = mongoose.model('EscrowTransaction', escrowTransactionSchema);
 export default EscrowTransaction;

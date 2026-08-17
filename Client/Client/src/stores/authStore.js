@@ -8,7 +8,7 @@ const useAuthStore = create((set) => ({
 
   checkAuth: async () => {
     try {
-      const res = await API.get('/auth/me');
+      const res = await API.get('/users/me');
       set({ user: res.data.user, isAuthenticated: true, loading: false });
     } catch {
       set({ user: null, isAuthenticated: false, loading: false });

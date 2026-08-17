@@ -5,6 +5,8 @@ import NGO from '../models/NGO.js';
 // Importing the Cloudinary upload utility to handle asset hosting
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
+import { generateAiTags } from '../services/aiTagging.service.js';
+
 /**
  * Cause Controller
  * Handles creation, listing, and updates of charitable causes or fundraising missions.
@@ -49,6 +51,8 @@ export const createCause = async (req, res) => {
             }
         }
 
+        const { categories, tags } = await generateAiTags(description)
+
         // Creating the new cause document in the MongoDB database
         const newCause = await Cause.create({
             // Linking the cause back to the verified NGO's profile ID
@@ -64,7 +68,9 @@ export const createCause = async (req, res) => {
             // Storing the cover image URL hosted on Cloudinary or setting an empty string
             coverImage: coverImageUrl || '',
             // Auto-inheriting the category from the parent NGO for discovery and recommendations
-            category: req.body.category || ngo.category || ''
+            categories: categories,
+
+            tags: tags
         });
 
         // Atomically updating the NGO's document to push the new cause's ID
@@ -72,7 +78,7 @@ export const createCause = async (req, res) => {
 
         // Returning the successfully created cause document
         return res.status(201).json({ success: true, message: 'Cause created successfully', cause: newCause });
-    // Catching any database errors, validation failures, or server-side issues
+        // Catching any database errors, validation failures, or server-side issues
     } catch (error) {
         // Returning a 500 status code with the specific error message for debugging
         return res.status(500).json({ success: false, message: 'Error creating cause', error: error.message });
@@ -130,7 +136,7 @@ export const getCauses = async (req, res) => {
             // The actual array of cause documents
             causes
         });
-    // Catching any errors during query execution or populate logic
+        // Catching any errors during query execution or populate logic
     } catch (error) {
         // Returning a 500 status with specific failure details
         return res.status(500).json({ success: false, message: 'Error fetching causes', error: error.message });
@@ -158,7 +164,7 @@ export const getCauseDetails = async (req, res) => {
 
         // Returning the enriched cause profile to the client UI
         return res.status(200).json({ success: true, cause });
-    // Catching any errors during ID parsing or database lookup
+        // Catching any errors during ID parsing or database lookup
     } catch (error) {
         // Returning a 500 internal server error with the failure message
         return res.status(500).json({ success: false, message: 'Error fetching cause details', error: error.message });

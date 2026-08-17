@@ -8,7 +8,6 @@ import './DonorDashboard.css';
 const TABS = [
   { id: 'dashboard', label: 'Overview', icon: 'dashboard' },
   { id: 'ledger', label: 'Escrow Ledger', icon: 'account_balance_wallet' },
-  { id: 'teams', label: 'Teams', icon: 'group' },
   { id: 'preferences', label: 'Preferences', icon: 'style' }
 ];
 
@@ -166,17 +165,6 @@ export default function DonorDashboard() {
                   <p className="body-xs text-muted">Verified across all nodes</p>
                 </div>
               </div>
-
-              {/* Welcome Section */}
-              <div className="dash-minimal-welcome glass-panel">
-                 <h2 className="title-md font-headline">Impact Protocol v2.5 Synchronized</h2>
-                 <p className="body-sm text-muted">Welcome back, {user?.name.split(' ')[0]}. Your current contributions are actively secured across <strong>{new Set(donations.map(d => d.causeId?._id)).size}</strong> mission nodes. Use the dedicated tabs to audit your ledger or manage squad preferences.</p>
-                 <div className="dash-minimal-actions">
-                    <button onClick={() => navigate('/feed')} className="btn-link-sm"><span className="material-symbols-outlined">dynamic_feed</span> LIVE FEED</button>
-                    <button onClick={() => navigate('/causes')} className="btn-link-sm"><span className="material-symbols-outlined">explore</span> MISSIONS</button>
-                    <button onClick={() => setActiveTab('ledger')} className="btn-link-sm"><span className="material-symbols-outlined">account_balance_wallet</span> AUDIT LEDGER</button>
-                 </div>
-              </div>
             </motion.div>
           )}
 
@@ -272,7 +260,7 @@ export default function DonorDashboard() {
             </motion.div>
           )}
 
-          {['teams', 'preferences'].includes(activeTab) && (
+          {[ 'preferences'].includes(activeTab) && (
             <motion.div 
                key="placeholder" 
                initial={{ opacity: 0 }} 

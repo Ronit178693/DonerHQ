@@ -32,5 +32,9 @@ const impactVideoSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Indexes for fast impact proof lookups by cause and NGO
+impactVideoSchema.index({ causeId: 1 });
+impactVideoSchema.index({ ngoId: 1 });
+
 const ImpactVideo = mongoose.model('ImpactVideo', impactVideoSchema);
 export default ImpactVideo;

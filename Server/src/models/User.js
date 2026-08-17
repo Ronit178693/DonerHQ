@@ -69,13 +69,17 @@ const userSchema = new mongoose.Schema({
         default: 'donor'
     },
 
-    // Interests field for donor-specific preferences
+    // Interests field for donor-specific preferences (dynamic categories)
     interests: [{
         // Data type is string
-        type: String,
-        // Restricts values to the predefined interest categories
-        enum: INTEREST_CATEGORIES
+        type: String
     }],
+
+    // Stores the raw text input given by the user
+    rawPreferenceDescription: {
+        type: String,
+        default: ''
+    },
 
     // Flag to track if the onboarding quiz is completed
     onboardingComplete: {
@@ -166,6 +170,10 @@ const userSchema = new mongoose.Schema({
     // Automatically adds createdAt and updatedAt fields
     timestamps: true
 });
+
+// Indexes for fast user role filtering and personalized feed tag matching
+userSchema.index({ role: 1 });
+userSchema.index({ interestTags: 1, interests: 1 });
 
 // Helper function to hash a plain text password
 export const hashPassword = async (password) => {

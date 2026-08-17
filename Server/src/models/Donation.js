@@ -45,5 +45,11 @@ const donationSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Indexes for fast donor history, cause statistics, NGO totals, and payment webhook processing
+donationSchema.index({ donorId: 1, status: 1 });
+donationSchema.index({ causeId: 1, status: 1 });
+donationSchema.index({ ngoId: 1, status: 1 });
+donationSchema.index({ razorpayOrderId: 1 });
+
 const Donation = mongoose.model('Donation', donationSchema);
 export default Donation;
