@@ -9,6 +9,7 @@ import crypto from 'crypto';
 // Importing the Cloudinary upload utility for NGO registration file handling
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import sendEmail from '../utils/sendEmail.js';
+import { generateAiTags } from '../services/aiTagging.service.js';
 
 
 // Reusable function to create a JWT and set it as an httpOnly session cookie
@@ -64,78 +65,42 @@ export const register = async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid role provided' });
 };
 
-// End-point to register a new donor account with an interest-based onboarding quiz
+// End-point to register a new donor account with dynamic AI interest extraction
 export const registerDonor = async (req, res) => {
-    // Destructuring all essential donor registration fields from the request body
-    const { name, email, password, interests } = req.body;
+    // Destructuring essential donor registration fields from the request body
+    const { name, email, password, rawPreferenceDescription } = req.body;
     // Starting the registration process with comprehensive error catching
     try {
         // Defensive check: ensuring name, email, and password are all present
         if (!name || !email || !password) {
-            // Returning a 400 Bad Request if any mandatory field is missing
             return res.status(400).json({ success: false, message: 'Name, email and password are required' });
-        // Closing the guard clause
-        }
-
-        // Ensuring interests is an array (even if a single string is provided by multipart/form-data)
-        let normalizedInterests = interests;
-        if (interests && typeof interests === 'string') {
-            try {
-                normalizedInterests = JSON.parse(interests);
-            } catch (e) {
-                normalizedInterests = [interests];
-            }
-        }
-
-        // Ensuring the donor has participated in the interest selection component
-        if (!normalizedInterests || !Array.isArray(normalizedInterests) || normalizedInterests.length === 0) {
-            // Returning an error prompting the user to select at least one interest category
-            return res.status(400).json({
-                success: false,
-                message: 'Please select at least one interest category',
-                categories: INTEREST_CATEGORIES
-            });
-        }
-
-        // Filtering user inputs to ensure only valid interest categories are saved
-        const invalidInterests = normalizedInterests.filter(i => !INTEREST_CATEGORIES.includes(i));
-        // Branching logic to handle disallowed category inputs
-        if (invalidInterests.length > 0) {
-            // Returning an error listing which specific categories failed validation
-            return res.status(400).json({
-                // Flagging failure
-                success: false,
-                // Reporting specific error details
-                message: `Invalid interest categories: ${invalidInterests.join(', ')}`,
-                // Reminding the client of the correct options
-                validCategories: INTEREST_CATEGORIES
-            // Closing the JSON object
-            });
-        // Closing the invalid interests block
         }
 
         // Checking the database for an existing user with the same email to prevent duplicates
         const existingUser = await User.findOne({ email });
-        // Handling the case where the email is already registered
         if (existingUser) {
-            // Returning a 400 error to indicate the account already exists
             return res.status(400).json({ success: false, message: 'User already exists' });
-        // Closing the duplicate check block
+        }
+
+        let aiCategories = [];
+        let aiInterestTags = [];
+
+        // If donor provided a natural language preference description, process it via Gemini AI to auto-fill interests & tags
+        if (rawPreferenceDescription && rawPreferenceDescription.trim() !== '') {
+            const aiResult = await generateAiTags(rawPreferenceDescription);
+            aiCategories = aiResult.categories || [];
+            aiInterestTags = aiResult.tags || [];
         }
 
         // Creating and saving the new user document into the MongoDB collection
         const newUser = await User.create({
-            // Setting the full name of the donor
             name,
-            // Setting the unique account email
             email,
-            // Hashing the plain text password for secure database storage
             password: await hashPassword(password),
-            // Assigning the default donor role for social accounts
             role: 'donor',
-            // Storing the filtered interest categories for the feed algorithm
-            interests: normalizedInterests,
-            // Marking the onboarding journey as successfully completed
+            rawPreferenceDescription: rawPreferenceDescription || '',
+            categories: aiCategories,       // Auto-filled by AI
+            interestTags: aiInterestTags,  // Auto-filled by AI
             onboardingComplete: true
         });
         
@@ -144,7 +109,7 @@ export const registerDonor = async (req, res) => {
             <div style="font-family: sans-serif; background: #0a0a0a; color: #fff; padding: 40px; border-radius: 16px;">
                 <h1 style="color: #b9ffe8; font-size: 24px;">Welcome to the Impact Ledger, ${name}!</h1>
                 <p>Your donor node has been successfully initialized on <b>DonerHQ</b>.</p>
-                <p>We've calibrated your feed based on your interests: <b>${normalizedInterests.join(', ')}</b>.</p>
+                <p>We've calibrated your feed based on your preferences: <b>${aiCategories.join(', ') || 'General Impact'}</b>.</p>
                 <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
                     <p style="font-size: 12px; color: #666;">This is an automated protocol message. Verify your transactions on-chain.</p>
                 </div>
@@ -160,31 +125,23 @@ export const registerDonor = async (req, res) => {
 
         // Sending the final success response including the new user's profile
         return res.status(201).json({
-            // Marking success
             success: true,
-            // Sending a warm welcome message
             message: 'Donor registered and onboarded successfully',
-            // Attaching the profile object
             user: newUser
-        // Closing the success JSON
         });
-    // Catching any database connection issues or schema validation errors
     } catch (error) {
-        // Returning a 500 status with the specific internal failure details
         return res.status(500).json({ success: false, message: error.message });
-    // Closing the try-catch block
     }
-// Closing the registerDonor controller
 };
 
 // End-point to register a new NGO account with a pending verification status
 export const registerNGO = async (req, res) => {
     // Destructuring essential NGO and creator fields from the request body
-    const { name, email, password, bio, location, category } = req.body;
+    const { name, email, password, bio, location} = req.body;
     // Starting the NGO registration mission with an error safety net
     try {
         // Validating the presence of all required fields for a complete NGO profile
-        if (!name || !email || !password || !bio || !location || !category) {
+        if (!name || !email || !password || !bio || !location ) {
             // Returning 400 Bad Request if the profile data is incomplete
             return res.status(400).json({ success: false, message: 'Incomplete NGO registration details provided' });
         // Closing the completeness check
@@ -197,6 +154,13 @@ export const registerNGO = async (req, res) => {
             // Returning a 400 error if the organization's email is already in use
             return res.status(400).json({ success: false, message: 'User with this email already exists' });
         // Closing the duplicate email block
+        }
+        let AIcategories = [];
+        let AIinterestTags = [];
+        if(bio && bio.trim() !=''){
+            const aiResult = await generateAiTags(bio);
+            AIcategories = aiResult.categories || [];
+            AIinterestTags = aiResult.tags || [];
         }
 
         // Handling multiple file uploads using the Cloudinary helper
@@ -255,8 +219,10 @@ export const registerNGO = async (req, res) => {
             // Storing the geographic headquarters or service location
             location,
             // Categorizing the NGO for easier discovery and filtering
-            category,
+            category : AIcategories,
             // Initializing the status as pending until manually reviewed by an admin
+            tags : AIinterestTags,
+
             status: 'pending'
         // Closing the NGO create parameters
         });
