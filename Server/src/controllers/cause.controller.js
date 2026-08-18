@@ -92,7 +92,7 @@ export const createCause = async (req, res) => {
 // Controller to retrieve a list of all current causes across the platform based on filters
 export const getCauses = async (req, res) => {
     // Extracting optional filters and pagination controls from the URL query string
-    const { ngoId, status, search, page = 1, limit = 10 } = req.query;
+    const { ngoId, status, search, page = 1, limit = 12 } = req.query;
     // Starting the try block to perform the search and retrieval
     try {
         // Initializing an empty query object to build the search filter dynamically

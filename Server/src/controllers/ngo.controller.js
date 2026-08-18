@@ -10,6 +10,7 @@ import Cause from '../models/Cause.js';
 import Donation from '../models/Donation.js';
 // Importing the Cloudinary upload utility to handle logo and media hosting
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { generateAiTags } from '../services/aiTagging.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 //  NGO PROFILE — Public facing page (like an Instagram profile)
@@ -120,77 +121,68 @@ export const updateNGOProfile = async (req, res) => {
 //  NGO DISCOVERY & SEARCH — Browse and filter NGOs
 // ═══════════════════════════════════════════════════════════════
 
-// Controller to list all approved NGOs with optional filtering by category and location
+// Controller to list all approved NGOs with AI smart search across categories, tags, name, bio & location
 export const discoverNGOs = async (req, res) => {
     // Extracting optional query parameters for filtering from the URL
-    const { category, location, search, page = 1, limit = 12 } = req.query;
+    const { location, search, page = 1, limit = 12 } = req.query;
     // Beginning the try block
     try {
         // Building a dynamic filter object that starts with only approved NGOs
         const filter = { status: 'approved' };
 
-        // Adding a category filter if the client specified one
-        if (category) {
-            // Setting the category field in the query filter
-            filter.category = category;
-        // Closing the category check
-        }
-
         // Adding a location filter using a case-insensitive regex match
         if (location) {
-            // Allowing partial location matches
             filter.location = { $regex: location, $options: 'i' };
-        // Closing the location check
         }
 
-        // Adding a text search filter for NGO name or bio (escape regex chars to prevent ReDoS)
-        if (search) {
+        // Smart AI Search across name, bio, location, categories, and tags
+        if (search && search.trim() !== '') {
             const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Using an OR condition
-            filter.$or = [
-                // Match name
-                { name: { $regex: escaped, $options: 'i' } },
-                // Match bio
-                { bio: { $regex: escaped, $options: 'i' } }
+            const searchRegex = new RegExp(escaped, 'i');
+
+            // Extract high-level categories and low-level tags from search phrase via Gemini AI
+            const { categories: searchCategories, tags: searchTags } = await generateAiTags(search);
+
+            const searchConditions = [
+                { name: searchRegex },
+                { bio: searchRegex },
+                { location: searchRegex }
             ];
-        // Closing the search check
+
+            // Match categories array index
+            if (searchCategories && searchCategories.length > 0) {
+                searchConditions.push({ categories: { $in: searchCategories } });
+            }
+
+            // Match tags array index
+            if (searchTags && searchTags.length > 0) {
+                searchConditions.push({ tags: { $in: searchTags } });
+            }
+
+            filter.$or = searchConditions;
         }
 
         // Counting total matching documents
         const total = await NGO.countDocuments(filter);
 
-        // Querying the database with the filter
+        // Querying the database with the filter (using multi-key indexes)
         const ngos = await NGO.find(filter)
-            // Selecting fields
-            .select('name logo category location bio transparencyScore followerCount totalRaised verified')
-            // Sorting
+            .select('name logo category categories tags location bio transparencyScore followerCount totalRaised verified')
             .sort({ transparencyScore: -1 })
-            // Paginating
             .skip((page - 1) * limit)
-            // Limiting
             .limit(parseInt(limit));
 
         // Returning the paginated list
         return res.status(200).json({
-            // Success flag
             success: true,
-            // Total volume
             total,
-            // Page number
             page: parseInt(page),
-            // Total pages
             pages: Math.ceil(total / limit),
-            // List of NGOs
             ngos
-        // Closing the response JSON
         });
-    // Catching errors
     } catch (error) {
-        // Return 500
         return res.status(500).json({ success: false, message: error.message });
-    // Closing the try-catch block
     }
-// Closing the discoverNGOs controller
 };
 
 // ═══════════════════════════════════════════════════════════════
