@@ -4,9 +4,6 @@ import express from 'express';
 import {
     getUserProfile,
     updateUserProfile,
-    followNGO,
-    unfollowNGO,
-    getUserFeed,
     saveNGO,
     unsaveNGO,
     getWishlist,
@@ -14,6 +11,8 @@ import {
     getRecommendedCauses,
     getMyInfo
 } from '../controllers/user.controller.js';
+import { followNGO, unfollowNGO } from '../controllers/ngo.controller.js';
+import { getFeedPosts } from '../controllers/post.controller.js';
 // Importing the protect middleware to ensure only logged-in users access routes
 import { protect } from '../middlewares/auth.middleware.js';
 
@@ -46,7 +45,7 @@ router.post('/follow', followNGO);
 router.post('/unfollow', unfollowNGO);
 
 // End-point to get the personalized social media feed
-router.get('/feed', getUserFeed);
+router.get('/feed', getFeedPosts);
 
 // End-point to save an NGO to user's bookmark list
 router.post('/save-ngo', saveNGO);

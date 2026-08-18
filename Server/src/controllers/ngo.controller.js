@@ -197,73 +197,6 @@ export const discoverNGOs = async (req, res) => {
 //  SOCIAL MEDIA POSTING — NGOs create photo/video/text posts
 // ═══════════════════════════════════════════════════════════════
 
-// Controller for an NGO to create a new social media post
-export const createPost = async (req, res) => {
-    // Extract post details from request body
-    const { type, mediaUrl, caption, tags, linkedCauseId } = req.body;
-    // Try block for post creation
-    try {
-        // Find NGO associated with current user
-        const ngo = await NGO.findOne({ userId: req.user._id });
-
-        // Check if NGO profile exists
-        if (!ngo) {
-            // Return 404
-            return res.status(404).json({ success: false, message: 'NGO profile not found' });
-        // Closing the guard clause
-        }
-
-        // Ensure NGO is approved
-        if (ngo.status !== 'approved') {
-            // Return 403
-            return res.status(403).json({ success: false, message: 'Your NGO must be verified before you can post' });
-        // Closing the approval check
-        }
-
-        // Validate type
-        if (!type) {
-            // Return 400
-            return res.status(400).json({ success: false, message: 'Post type is required' });
-        // Closing the type check
-        }
-
-        // Validate media URL
-        if ((type === 'photo' || type === 'video') && !mediaUrl) {
-            // Return 400
-            return res.status(400).json({ success: false, message: 'Media URL is required for photo/video posts' });
-        // Closing the media URL check
-        }
-
-        // Create post
-        const newPost = await Post.create({
-            // NGO ID
-            ngoId: ngo._id,
-            // Type
-            type,
-            // Media
-            mediaUrl: mediaUrl || '',
-            // Caption
-            caption: caption || '',
-            // Tags
-            tags: tags || [],
-            // Linked Cause
-            linkedCauseId: linkedCauseId || null
-        });
-
-        // Atomic push to NGO
-        await NGO.findByIdAndUpdate(ngo._id, { $push: { posts: newPost._id } });
-
-        // Return success
-        return res.status(201).json({ success: true, message: 'Post created successfully', post: newPost });
-    // Catching errors
-    } catch (error) {
-        // Return 500
-        return res.status(500).json({ success: false, message: 'Error creating post', error: error.message });
-    // Closing the try-catch block
-    }
-// Closing the createPost controller
-};
-
 // Controller to delete a post
 export const deletePost = async (req, res) => {
     // Extract post ID
@@ -276,7 +209,6 @@ export const deletePost = async (req, res) => {
         if (!post) {
             // Return 404
             return res.status(404).json({ success: false, message: 'Post not found' });
-        // Closing the guard clause
         }
 
         // Find NGO
@@ -285,7 +217,6 @@ export const deletePost = async (req, res) => {
         if (!ngo || post.ngoId.toString() !== ngo._id.toString()) {
             // Return 403
             return res.status(403).json({ success: false, message: 'Unauthorized to delete this post' });
-        // Closing the auth check
         }
 
         // Atomic pull from NGO
@@ -295,111 +226,82 @@ export const deletePost = async (req, res) => {
 
         // Return success
         return res.status(200).json({ success: true, message: 'Post deleted successfully' });
-    // Catching errors
     } catch (error) {
-        // Return 500
         return res.status(500).json({ success: false, message: 'Error deleting post', error: error.message });
-    // Closing the try-catch block
     }
-// Closing the deletePost controller
 };
 
 // Controller to get all posts for a specific NGO
 export const getNGOPosts = async (req, res) => {
-    // Extract ID
     const { id } = req.params;
-    // Try block
     try {
-        // Find posts
         const posts = await Post.find({ ngoId: id })
-            // Sort
             .sort({ createdAt: -1 })
-            // Populate cause
             .populate('linkedCauseId', 'title goalAmount raisedAmount status');
 
-        // Return success
         return res.status(200).json({ success: true, count: posts.length, posts });
-    // Catching errors
     } catch (error) {
-        // Return 500
         return res.status(500).json({ success: false, message: error.message });
-    // Closing the try-catch block
     }
-// Closing the getNGOPosts controller
 };
 
 // ═══════════════════════════════════════════════════════════════
-//  SOCIAL — Follow / Unfollow an NGO (like Instagram)
+//  SOCIAL — Follow / Unfollow an NGO (Supports URL params :id or body.ngoId)
 // ═══════════════════════════════════════════════════════════════
 
 // Controller to follow an NGO
 export const followNGO = async (req, res) => {
-    // Extract ID
-    const { id } = req.params;
-    // Try block
+    const targetId = req.params.id || req.body.ngoId;
+    if (!targetId) {
+        return res.status(400).json({ success: false, message: 'NGO ID is required' });
+    }
     try {
-        // Check NGO existence
-        const ngoExists = await NGO.exists({ _id: id });
-        // Guard clause
+        const ngoExists = await NGO.exists({ _id: targetId });
         if (!ngoExists) {
-            // Return 404
             return res.status(404).json({ success: false, message: 'NGO not found' });
         }
 
-        // Check if already following
         const user = await User.findById(req.user._id);
-        if (user.following.map(f => f.toString()).includes(id)) {
+        if (user.following.map(f => f.toString()).includes(targetId)) {
             return res.status(400).json({ success: false, message: 'Already following this NGO' });
         }
 
-        // Atomic update user following
         await User.findByIdAndUpdate(
             req.user._id,
-            { $addToSet: { following: id } }
+            { $addToSet: { following: targetId } }
         );
 
-        // Atomic increment NGO followers
-        await NGO.findByIdAndUpdate(id, { $inc: { followerCount: 1 } });
+        await NGO.findByIdAndUpdate(targetId, { $inc: { followerCount: 1 } });
 
-        // Return success
         return res.status(200).json({ success: true, message: 'Successfully followed NGO' });
-    // Catching errors
     } catch (error) {
-        // Return 500
         return res.status(500).json({ success: false, message: 'Error following NGO', error: error.message });
     }
 };
 
 // Controller to unfollow an NGO
 export const unfollowNGO = async (req, res) => {
-    // Extract ID
-    const { id } = req.params;
-    // Try block
+    const targetId = req.params.id || req.body.ngoId;
+    if (!targetId) {
+        return res.status(400).json({ success: false, message: 'NGO ID is required' });
+    }
     try {
-        // Atomic pull from user
-        const user = await User.findByIdAndUpdate(
-            req.user._id,
-            { $pull: { following: id } }
-        );
-
-        // Check previous status
-        if (user.following.includes(id)) {
-            // Atomic decrement NGO followers
-            await NGO.findByIdAndUpdate(id, { $inc: { followerCount: -1 } });
-            // Return success
-            return res.status(200).json({ success: true, message: 'Successfully unfollowed NGO' });
-        // Closing the success check
+        const user = await User.findById(req.user._id);
+        if (!user.following.map(f => f.toString()).includes(targetId)) {
+            return res.status(400).json({ success: false, message: 'Not following this NGO' });
         }
 
-        // Return 400
-        return res.status(400).json({ success: false, message: 'Not following this NGO' });
-    // Catching errors
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { $pull: { following: targetId } }
+        );
+
+        await NGO.findByIdAndUpdate(targetId, { $inc: { followerCount: -1 } });
+
+        return res.status(200).json({ success: true, message: 'Successfully unfollowed NGO' });
     } catch (error) {
-        // Return 500
         return res.status(500).json({ success: false, message: 'Error unfollowing NGO', error: error.message });
-    // Closing the try-catch block
     }
-// Closing the unfollowNGO controller
 };
 
 // ═══════════════════════════════════════════════════════════════
