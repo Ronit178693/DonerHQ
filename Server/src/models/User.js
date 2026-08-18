@@ -70,16 +70,15 @@ const userSchema = new mongoose.Schema({
     },
 
     // Interests field for donor-specific preferences (dynamic categories)
-    interests: [{
-        // Data type is string
-        type: String
-    }],
 
     // Stores the raw text input given by the user
     rawPreferenceDescription: {
         type: String,
         default: ''
     },
+    categories: [{
+        type: String
+    }],
 
     // Flag to track if the onboarding quiz is completed
     onboardingComplete: {

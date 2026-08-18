@@ -92,7 +92,7 @@ export const createCause = async (req, res) => {
 // Controller to retrieve a list of all current causes across the platform based on filters
 export const getCauses = async (req, res) => {
     // Extracting optional filters and pagination controls from the URL query string
-    const { ngoId, status, search, page = 1, limit = 10 } = req.query;
+    const { ngoId, status, search, page = 1, limit = 12 } = req.query;
     // Starting the try block to perform the search and retrieval
     try {
         // Initializing an empty query object to build the search filter dynamically
@@ -101,13 +101,34 @@ export const getCauses = async (req, res) => {
         if (ngoId) query.ngoId = ngoId;
         // If a status filter is provided (e.g., active, finished), apply it to the query
         if (status) query.status = status;
-        // If a search keyword is provided, perform a case-insensitive regex search on the cause title
-        if (search) {
+
+        // Pure AI Search: matches title, description, categories, and tags using multi-key indexes
+        if (search && search.trim() !== '') {
             const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            query.title = { $regex: escaped, $options: 'i' };
+            const searchRegex = new RegExp(escaped, 'i');
+
+            // Extract high-level categories and low-level tags from the search string via AI
+            const { categories: searchCategories, tags: searchTags } = await generateAiTags(search);
+
+            const searchConditions = [
+                { title: searchRegex },
+                { description: searchRegex }
+            ];
+
+            // Leverage multi-key index on categories array
+            if (searchCategories && searchCategories.length > 0) {
+                searchConditions.push({ categories: { $in: searchCategories } });
+            }
+
+            // Leverage multi-key index on tags array
+            if (searchTags && searchTags.length > 0) {
+                searchConditions.push({ tags: { $in: searchTags } });
+            }
+
+            query.$or = searchConditions;
         }
 
-        // Finding causes that match all provided query parameters
+        // Finding causes that match all provided query parameters (utilizing compound & multi-key indexes)
         const causes = await Cause.find(query)
             // Populating key NGO display data for the cause's card layout
             .populate('ngoId', 'name logo verified transparencyScore')
@@ -123,17 +144,11 @@ export const getCauses = async (req, res) => {
 
         // Returning the paginated results along with metadata describing the total count and page availability
         return res.status(200).json({
-            // Flagging successfully processed request
             success: true,
-            // Current number of records in this response
             count: causes.length,
-            // Total volume of records across all pages
             total,
-            // The current page number
             page: parseInt(page),
-            // The total number of available pages based on the limit
             pages: Math.ceil(total / limit),
-            // The actual array of cause documents
             causes
         });
         // Catching any errors during query execution or populate logic
