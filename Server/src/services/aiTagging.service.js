@@ -1,8 +1,16 @@
 import { GoogleGenAI } from '@google/genai';
 
-// Initialize Gemini Client with fallback to GEMINI_API_KEY or API_KEY
-const apiKey = process.env.API_KEY;
-const ai = new GoogleGenAI({ apiKey });
+let aiInstance = null;
+
+const getAiClient = () => {
+    if (!aiInstance) {
+        const apiKey = process.env.API_KEY 
+        if (apiKey) {
+            aiInstance = new GoogleGenAI({ apiKey });
+        }
+    }
+    return aiInstance;
+};
 
 /**
  * Sanitizes tag strings: converts to lowercase, removes special chars, replaces spaces with hyphens
@@ -28,8 +36,9 @@ export const generateAiTags = async (description) => {
         return { categories: [], tags: [] };
     }
 
+    const ai = getAiClient();
     // Return empty result gracefully if no API key is set
-    if (!apiKey) {
+    if (!ai) {
         console.warn('⚠️ GEMINI_API_KEY / API_KEY is not set. Skipping AI tagging.');
         return { categories: [], tags: [] };
     }
@@ -53,7 +62,7 @@ Text to analyze: "${description}"
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.6-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json'
