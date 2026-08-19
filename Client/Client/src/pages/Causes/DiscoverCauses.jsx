@@ -8,18 +8,45 @@ import './DiscoverCauses.css';
 export default function DiscoverCauses() {
   const [causes, setCauses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    API.get('/causes')
-      .then(res => setCauses(res.data.causes || []))
-      .catch(() => setCauses([]))
-      .finally(() => setLoading(false));
-  }, []);
+    let active = true;
 
-  const categories = ['All', 'Education', 'Healthcare', 'Environment', 'Sustainability', 'Rural Dev'];
-  const filteredCauses = filter === 'All' ? causes : causes.filter(c => c.category === filter);
+    // Debounce the API call by 500ms to avoid querying on every keystroke
+    const timer = setTimeout(() => {
+      const fetchCauses = async () => {
+        setLoading(true);
+        try {
+          const res = await API.get('/causes', {
+            params: {
+              search: searchQuery.trim() || undefined
+            }
+          });
+          if (active) {
+            setCauses(res.data.causes || []);
+          }
+        } catch (err) {
+          console.error('Fetch causes failed:', err);
+          if (active) {
+            setCauses([]);
+          }
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      };
+
+      fetchCauses();
+    }, 500);
+
+    // Cleanup: cancel pending timer and ignore in-flight response if searchQuery changes again
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
 
   return (
     <main className="discover-page">
@@ -37,30 +64,10 @@ export default function DiscoverCauses() {
                 className="search-input"
                 placeholder="Search causes..."
                 type="text"
-                list="cause-options"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-              <datalist id="cause-options">
-                <option value="Education" />
-                <option value="Environment" />
-                <option value="Health" />
-                <option value="Animal Welfare" />
-              </datalist>
             </div>
-          </div>
-
-          {/* Filter Chips */}
-          <div className="filters-row">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`filter-btn ${filter === cat ? 'active' : ''}`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </section>
 
@@ -72,7 +79,7 @@ export default function DiscoverCauses() {
                 <div style={{ width: '3rem', height: '3rem', border: '4px solid rgba(185,255,232,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                 <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
               </div>
-            ) : filteredCauses.length === 0 ? (
+            ) : causes.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '5rem', background: 'var(--color-surface-container-low)', borderRadius: '2rem', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '4rem', color: 'var(--color-outline)', marginBottom: '1rem' }}>search_off</span>
                 <h3 className="title-md" style={{ marginBottom: '0.5rem' }}>No causes found</h3>
@@ -80,7 +87,7 @@ export default function DiscoverCauses() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2.5rem' }}>
-                {filteredCauses.map((cause, i) => (
+                {causes.map((cause, i) => (
                   <motion.div
                     key={cause._id}
                     initial={{ opacity: 0, y: 20 }}
