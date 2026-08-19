@@ -6,24 +6,46 @@ import './DiscoverNgos.css';
 export default function DiscoverNgos() {
   const [ngos, setNgos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('All');
+  
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (activeCategory !== 'All') params.append('category', activeCategory);
-    if (searchTerm.trim()) params.append('search', searchTerm.trim());
-    params.append('limit', '50');
+    let active = true;
 
-    setLoading(true);
-    API.get(`/ngos/discover?${params.toString()}`)
-      .then(res => setNgos(res.data.ngos || []))
-      .catch(err => console.error('Discover fetch failed:', err))
-      .finally(() => setLoading(false));
-  }, [activeCategory, searchTerm]);
+    // Debounce the API call by 800ms to avoid querying on every keystroke
+    const timer = setTimeout(() => {
+      const fetchNGOs = async () => {
+        setLoading(true);
+        try {
+          const res = await API.get('/ngos/discover', {
+            params: {
+              search: searchTerm.trim() || undefined,
+              limit: 50
+            }
+          });
+          if (active) {
+            setNgos(res.data.ngos || []);
+          }
+        } catch (err) {
+          console.error('Discover fetch failed:', err);
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
+        }
+      };
 
-  const categories = ['All', 'Education', 'Healthcare', 'Environment', 'Animal Welfare', 'Social Equality', 'Disaster Relief', 'Sustainability'];
+      fetchNGOs();
+    }, 800);
 
+    // Cleanup: cancel pending timer and ignore in-flight response if searchTerm changes again
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [searchTerm]);
+
+  
   return (
     <main className="discover-ngo-page celestial-bg">
       <div className="container">
@@ -42,18 +64,6 @@ export default function DiscoverNgos() {
                    value={searchTerm}
                    onChange={e => setSearchTerm(e.target.value)}
                  />
-              </div>
-              
-              <div className="filter-chips">
-                 {categories.map(cat => (
-                   <button 
-                     key={cat} 
-                     className={`chip ${activeCategory === cat ? 'active' : ''}`}
-                     onClick={() => setActiveCategory(cat)}
-                   >
-                     {cat}
-                   </button>
-                 ))}
               </div>
            </div>
         </header>

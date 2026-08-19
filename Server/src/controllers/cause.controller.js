@@ -105,7 +105,7 @@ export const getCauses = async (req, res) => {
         // Pure AI Search: matches title, description, categories, and tags using multi-key indexes
         if (search && search.trim() !== '') {
             const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const searchRegex = new RegExp(escaped, 'i');
+            const searchRegex = new RegExp(escaped, 'i'); // Converts the searched term into a case insensitive db search
 
             // Extract high-level categories and low-level tags from the search string via AI
             const { categories: searchCategories, tags: searchTags } = await generateAiTags(search);

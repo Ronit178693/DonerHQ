@@ -13,10 +13,12 @@ export default function Register() {
     email: '',
     password: '',
     role: defaultRole,
-    interests: [],
+    rawPreferenceDescription: '',
     bio: '',
     location: '',
-    category: 'Education'
+    logo: null,
+    doc80G: null,
+    docFCRA: null
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,23 +26,10 @@ export default function Register() {
   const navigate = useNavigate();
   const register = useAuthStore((state) => state.register);
 
-  const interestOptions = ['education', 'environment', 'health', 'women', 'animals', 'hunger'];
-  const ngoCategories = ['Education', 'Healthcare', 'Environment', 'Animal Welfare', 'Social Equality', 'Disaster Relief'];
-
-  const toggleInterest = (interest) => {
-    setFormData(prev => {
-      const exists = prev.interests.includes(interest);
-      if (exists) {
-        return { ...prev, interests: prev.interests.filter(i => i !== interest) };
-      }
-      return { ...prev, interests: [...prev.interests, interest] };
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.role === 'donor' && formData.interests.length === 0) {
-      setError('Please select at least one mission objective (interest).');
+    if (formData.role === 'donor' && !formData.rawPreferenceDescription.trim()) {
+      setError('Please tell us what causes or impact goals you care about.');
       return;
     }
     setError('');
@@ -49,16 +38,20 @@ export default function Register() {
       if (formData.role === 'ngo') {
         const data = new FormData();
         Object.keys(formData).forEach(key => {
-          if (key === 'interests') {
-             // For NGO register, interests aren't expected normally but we check anyway
-             data.append(key, JSON.stringify(formData[key]));
-          } else {
-             data.append(key, formData[key]);
+          if (formData[key] !== null) {
+            data.append(key, formData[key]);
           }
         });
         await register(data);
       } else {
-        await register(formData);
+        const donorData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: 'donor',
+          rawPreferenceDescription: formData.rawPreferenceDescription
+        };
+        await register(donorData);
       }
       navigate(formData.role === 'ngo' ? '/ngo/dashboard' : '/donor/dashboard');
     } catch (err) {
@@ -171,35 +164,21 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Donor Specific: Interests */}
+              {/* Donor Specific: Free Text Intent Description */}
               {formData.role === 'donor' && (
                 <div className="form-section-modern animate-in" style={{ marginTop: '2rem' }}>
                   <label className="control-label-sm" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color: 'var(--color-primary)' }}>target</span>
-                    Select Your Impact Objectives
+                    What causes or impact goals do you care about?
                   </label>
-                  <div className="interest-chips-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.75rem' }}>
-                    {interestOptions.map(option => (
-                      <button
-                        key={option} type="button"
-                        onClick={() => toggleInterest(option)}
-                        className={`chip-btn ${formData.interests.includes(option) ? 'active' : ''}`}
-                        style={{
-                          padding: '0.75rem 0.5rem', borderRadius: '0.75rem', fontSize: '10px', fontWeight: 800,
-                          backgroundColor: formData.interests.includes(option) ? 'rgba(185, 255, 232, 0.15)' : 'rgba(255,255,255,0.02)',
-                          color: formData.interests.includes(option) ? 'var(--color-primary)' : 'var(--color-outline)',
-                          border: `1px solid ${formData.interests.includes(option) ? 'var(--color-primary)' : 'rgba(255,255,255,0.05)'}`,
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem'
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
-                          {option === 'education' ? 'menu_book' : option === 'environment' ? 'eco' : option === 'health' ? 'monitor_heart' : option === 'women' ? 'female' : option === 'animals' ? 'pets' : 'restaurant'}
-                        </span>
-                        {option.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
+                  <textarea 
+                    className="form-input" rows="4" 
+                    placeholder="Tell us what you care about in natural language (e.g. 'I want to fund clean drinking water initiatives and education for children in rural villages'). Gemini AI will dynamically customize your feed based on this."
+                    value={formData.rawPreferenceDescription} 
+                    onChange={(e) => setFormData({...formData, rawPreferenceDescription: e.target.value})}
+                    style={{ resize: 'none', padding: '1.25rem', borderRadius: '1rem', lineHeight: '1.5' }}
+                    required
+                  />
                 </div>
               )}
 
@@ -209,26 +188,23 @@ export default function Register() {
                    <div className="form-group-sm">
                       <label className="control-label-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                          <span className="material-symbols-outlined" style={{ fontSize: '1.125rem', color: 'var(--color-primary)' }}>history_edu</span>
-                         Foundational Mission Statment
+                         Foundational Mission Statement
                       </label>
                       <textarea 
                         className="form-input" rows="3" placeholder="Explain your organizational objective..."
                         value={formData.bio} onChange={(e) => setFormData({...formData, bio: e.target.value})}
                         style={{ resize: 'none', padding: '1.25rem', borderRadius: '1rem', lineHeight: '1.5' }}
+                        required
                       />
                    </div>
                    
-                   <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                      <div className="form-group-sm">
-                        <label className="control-label-sm">Primary Node Location</label>
-                        <input className="form-input" type="text" placeholder="e.g. Mumbai, India" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} />
-                      </div>
-                      <div className="form-group-sm">
-                        <label className="control-label-sm">Impact Vector</label>
-                        <select className="form-input" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
-                          {ngoCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                        </select>
-                      </div>
+                   <div className="form-group-sm">
+                      <label className="control-label-sm">Primary Node Location</label>
+                      <input 
+                         className="form-input" type="text" placeholder="e.g. Mumbai, India" 
+                         value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                         required
+                      />
                    </div>
 
                    <div className="form-group-sm">

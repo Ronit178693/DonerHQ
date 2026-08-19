@@ -32,7 +32,7 @@ export const getNGOProfile = async (req, res) => {
                 path: 'posts',
                 // Sort newest first
                 options: { sort: { createdAt: -1 } }
-            // Closing the populate options
+                // Closing the populate options
             })
             // Populate user ID and name
             .populate('userId', 'name');
@@ -41,18 +41,18 @@ export const getNGOProfile = async (req, res) => {
         if (!ngo) {
             // Return 404 if not found
             return res.status(404).json({ success: false, message: 'NGO not found' });
-        // Closing the guard clause
+            // Closing the guard clause
         }
 
         // Return success response with NGO data
         return res.status(200).json({ success: true, ngo });
-    // Catching errors
+        // Catching errors
     } catch (error) {
         // Return 500 error if something fails
         return res.status(500).json({ success: false, message: 'Error fetching NGO profile', error: error.message });
-    // Closing the try-catch block
+        // Closing the try-catch block
     }
-// Closing the getNGOProfile controller
+    // Closing the getNGOProfile controller
 };
 
 // Controller to update NGO profile details (only the owning user can do this)
@@ -70,14 +70,14 @@ export const updateNGOProfile = async (req, res) => {
         if (!ngo) {
             // Return 404 if not found
             return res.status(404).json({ success: false, message: 'NGO not found' });
-        // Closing the guard clause
+            // Closing the guard clause
         }
 
         // Authorization check to ensure user owns the profile
         if (ngo.userId.toString() !== req.user?._id?.toString()) {
             // Return 403 if unauthorized
             return res.status(403).json({ success: false, message: 'Not authorized to update this profile' });
-        // Closing the auth check
+            // Closing the auth check
         }
 
         // Initialize object for selective updates
@@ -108,13 +108,13 @@ export const updateNGOProfile = async (req, res) => {
 
         // Return success response with updated NGO data
         return res.status(200).json({ success: true, message: 'NGO profile updated successfully', ngo: updatedNGO });
-    // Catching errors
+        // Catching errors
     } catch (error) {
         // Return 500 error if update fails
         return res.status(500).json({ success: false, message: 'Error updating NGO profile', error: error.message });
-    // Closing the try-catch block
+        // Closing the try-catch block
     }
-// Closing the updateNGOProfile controller
+    // Closing the updateNGOProfile controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -311,7 +311,7 @@ export const getNGODashboard = async (req, res) => {
         if (!ngo) {
             // Return 404
             return res.status(404).json({ success: false, message: 'NGO profile not found' });
-        // Closing the guard clause
+            // Closing the guard clause
         }
 
         // Social aggregation
@@ -382,15 +382,15 @@ export const getNGODashboard = async (req, res) => {
                 completedCauses,
                 totalDonations
             }
-        // Closing the response JSON
+            // Closing the response JSON
         });
-    // Catching errors
+        // Catching errors
     } catch (error) {
         // Return 500
         return res.status(500).json({ success: false, message: 'Error fetching dashboard data', error: error.message });
-    // Closing the try-catch block
+        // Closing the try-catch block
     }
-// Closing the getNGODashboard controller
+    // Closing the getNGODashboard controller
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -410,11 +410,11 @@ export const getNGOCauses = async (req, res) => {
 
         // Return array
         return res.status(200).json({ success: true, count: causes.length, causes });
-    // Catching errors
+        // Catching errors
     } catch (error) {
         // Return 500
         return res.status(500).json({ success: false, message: error.message });
-    // Closing the try-catch block
+        // Closing the try-catch block
     }
-// Closing the getNGOCauses controller
+    // Closing the getNGOCauses controller
 };

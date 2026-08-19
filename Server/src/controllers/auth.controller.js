@@ -58,7 +58,7 @@ export const register = async (req, res) => {
         // Providing fallback defaults for mandatory NGO fields to prevent initial setup failure
         if (!req.body.bio || req.body.bio === '') req.body.bio = 'New organization on DonerHQ.';
         if (!req.body.location || req.body.location === '') req.body.location = 'India';
-        if (!req.body.category || req.body.category === '') req.body.category = 'Sustainability';
+        // No category fallback needed — AI extracts categories from bio
         return registerNGO(req, res);
     }
 
@@ -218,10 +218,10 @@ export const registerNGO = async (req, res) => {
             docFCRA: docFCRAUrl || '',
             // Storing the geographic headquarters or service location
             location,
-            // Categorizing the NGO for easier discovery and filtering
-            category : AIcategories,
-            // Initializing the status as pending until manually reviewed by an admin
-            tags : AIinterestTags,
+            // AI-extracted categories array from bio (e.g., ["clean-water", "environment"])
+            categories: AIcategories,
+            // AI-extracted specific search tags from bio (e.g., ["borewell", "filtration"])
+            tags: AIinterestTags,
 
             status: 'pending'
         // Closing the NGO create parameters

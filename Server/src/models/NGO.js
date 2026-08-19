@@ -27,10 +27,10 @@ const ngoSchema = new mongoose.Schema({
     },
 
     // Category for classification and filtering
-    category: {
+    categories: [{
         // Data type is string
         type: String
-    },
+    }],
     tags: [{
     type: String
 }],
